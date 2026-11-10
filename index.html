@@ -1,0 +1,3003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Revolución Documental con Google Gemini — Tutorial Interactivo V001</title>
+  <style>
+    :root {
+      --bg-main: #0a0e1a;
+      --bg-card: #0f172a;
+      --bg-card-alt: #131f38;
+      --blue-highlight: #1e3a5f;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --accent: #38bdf8;
+      --accent-bright: #00d4ff;
+      --accent-soft: rgba(56, 189, 248, 0.14);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border-color: #1e3a5f;
+      --font-scale: 1;
+      --nav-height: 58px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    body.light-theme {
+      --bg-main: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-card-alt: #f8fafc;
+      --blue-highlight: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --accent: #0284c7;
+      --accent-bright: #0369a1;
+      --accent-soft: rgba(2, 132, 199, 0.12);
+      --border-color: #cbd5e1;
+      --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      font-size: calc(16px * var(--font-scale));
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      padding-top: calc(var(--nav-height) + 46px);
+      padding-bottom: 90px;
+    }
+
+    /* BARRA DE PROGRESO DE LECTURA */
+    #reading-progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(30, 58, 95, 0.4);
+      z-index: 60;
+    }
+
+    #reading-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #a855f7, var(--accent-bright));
+      transition: width 0.15s ease-out;
+    }
+
+    /* BARRA DE NAVEGACIÓN PRINCIPAL */
+    #main-nav {
+      position: fixed;
+      top: 4px;
+      left: 0;
+      right: 0;
+      height: var(--nav-height);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      overflow-x: auto;
+      white-space: nowrap;
+      z-index: 45;
+      scrollbar-width: thin;
+    }
+
+    #main-nav::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    #main-nav::-webkit-scrollbar-thumb {
+      background: var(--blue-highlight);
+      border-radius: 3px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 6px 13px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-alt);
+      color: var(--text-primary);
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+
+    .chip:hover,
+    .chip:focus-visible {
+      border-color: var(--accent);
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .chip.active-tab {
+      background: var(--accent-soft);
+      color: var(--accent-bright);
+      border-color: var(--accent-bright);
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+    }
+
+    #mb {
+      background: linear-gradient(135deg, #1e3a5f, #0f172a);
+      color: #ffffff;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* PANEL LATERAL DE ÍNDICE (#dr) */
+    #dr {
+      position: fixed;
+      top: 62px;
+      left: 0;
+      bottom: 0;
+      width: min(330px, 88vw);
+      background: #0f172a;
+      border-right: 1px solid #1e3a5f;
+      transform: translateX(-105%);
+      transition: 0.25s ease;
+      z-index: 50;
+      overflow-y: auto;
+      padding: 12px 10px 80px 10px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    #dr.o {
+      transform: none;
+    }
+
+    #dr .dr-header {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      padding: 6px 12px 10px;
+      border-bottom: 1px solid #1e3a5f;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    #dr a {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      color: #e2e8f0;
+      cursor: pointer;
+      min-height: 44px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      text-decoration: none;
+      margin-bottom: 3px;
+      transition: background 0.15s ease;
+    }
+
+    #dr a:hover,
+    #dr a:focus-visible {
+      background: #ffffff0d;
+      outline: 2px solid #00d4ff;
+    }
+
+    #dr a.on {
+      background: #00d4ff22;
+      color: #00d4ff;
+      font-weight: 700;
+      border-left: 3px solid #00d4ff;
+    }
+
+    /* BARRA SECUNDARIA DE HERRAMIENTAS Y BUSCADOR */
+    #utility-bar {
+      position: fixed;
+      top: 62px;
+      left: 0;
+      right: 0;
+      min-height: 44px;
+      background: var(--bg-main);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 10px;
+      z-index: 35;
+      flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 155px;
+      max-width: 400px;
+      position: relative;
+    }
+
+    #global-search {
+      width: 100%;
+      min-height: 36px;
+      padding: 6px 32px 6px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+    }
+
+    #global-search:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    #clear-search-btn {
+      position: absolute;
+      right: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 4px;
+      display: none;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tool-btn {
+      min-height: 36px;
+      min-width: 36px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tool-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* RESULTADOS DEL BUSCADOR */
+    #search-results-panel {
+      display: none;
+      max-width: 960px;
+      margin: 12px auto;
+      padding: 14px;
+      background: var(--bg-card);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .search-hit-item {
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--text-primary);
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      font-size: 0.9rem;
+    }
+
+    .search-hit-item:hover {
+      background: var(--accent-soft);
+    }
+
+    /* CONTENEDOR PRINCIPAL optimizado para Samsung Galaxy A02s (360px) y Escritorio */
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 14px 12px;
+      width: 100%;
+    }
+
+    .tab-section {
+      display: none;
+      animation: fadeInSection 0.22s ease-out;
+    }
+
+    .tab-section.active-section {
+      display: block;
+    }
+
+    @keyframes fadeInSection {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* TIPOGRAFÍA Y ENCABEZADOS */
+    h1 {
+      font-size: clamp(1.45rem, 4.5vw, 2.2rem);
+      line-height: 1.25;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      font-weight: 800;
+    }
+
+    .author-byline-title {
+      color: var(--accent-bright);
+      display: inline-block;
+    }
+
+    h2 {
+      font-size: clamp(1.25rem, 3.8vw, 1.75rem);
+      color: var(--accent);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-color);
+      line-height: 1.3;
+    }
+
+    h3 {
+      font-size: clamp(1.05rem, 3vw, 1.3rem);
+      color: var(--text-primary);
+      margin: 18px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h4 {
+      font-size: 1rem;
+      color: var(--accent-bright);
+      margin: 12px 0 6px;
+    }
+
+    p {
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      overflow-wrap: break-word;
+    }
+
+    ul, ol {
+      margin: 0 0 14px 20px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* TARJETAS Y COMPONENTES PEDAGÓGICOS */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .pedagogy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .pedagogy-box {
+      background: var(--bg-card-alt);
+      border-left: 4px solid var(--accent);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .pedagogy-box.why-box {
+      border-left-color: #a855f7;
+    }
+
+    .pedagogy-box.for-box {
+      border-left-color: var(--success);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--accent-soft);
+      color: var(--accent-bright);
+      border: 1px solid var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .badge.lvl-1 { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: #10b981; }
+    .badge.lvl-2 { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: #f59e0b; }
+    .badge.lvl-3 { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: #ef4444; }
+
+    /* SVG HERO CONTAINER (4:5 vertical adaptable) */
+    .svg-hero-wrapper {
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 4 / 5;
+      margin: 0 auto 16px auto;
+      background: radial-gradient(circle at 50% 40%, #162a4a 0%, #090d18 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 12px 32px rgba(0, 212, 255, 0.15);
+    }
+
+    .svg-hero-mount {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .svg-hero-mount svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .svg-controls-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* BLOQUES DE PROMPTS Y CÓDIGO CON BOTÓN COPIAR */
+    .prompt-block {
+      background: #070b14;
+      border: 1px solid var(--blue-highlight);
+      border-left: 4px solid var(--accent-bright);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin: 12px 0;
+    }
+
+    body.light-theme .prompt-block {
+      background: #f8fafc;
+    }
+
+    .prompt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      flex-wrap: wrap;
+    }
+
+    .prompt-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .copy-btn {
+      min-height: 36px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-bright);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--accent);
+      color: #0a0e1a;
+    }
+
+    .copy-btn.copied-ok {
+      background: var(--success);
+      border-color: var(--success);
+      color: #ffffff;
+    }
+
+    .prompt-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* PASOS DE PROCEDIMIENTO */
+    .step-list {
+      list-style: none;
+      margin: 12px 0;
+      padding: 0;
+    }
+
+    .step-item {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0a0e1a;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-right: 8px;
+    }
+
+    .step-meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.25);
+    }
+
+    /* DESPLEGABLES (DETAILS / SUMMARY) */
+    details.qa-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    details.qa-card summary {
+      padding: 13px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text-primary);
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+    }
+
+    details.qa-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.qa-card summary::after {
+      content: "＋";
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    details.qa-card[open] summary::after {
+      content: "－";
+    }
+
+    details.qa-card[open] summary {
+      border-bottom: 1px solid var(--border-color);
+      background: var(--accent-soft);
+    }
+
+    .qa-body {
+      padding: 14px;
+      background: var(--bg-card-alt);
+      font-size: 0.94rem;
+    }
+
+    /* TABLAS RESPONSIVAS */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 310px;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: var(--bg-card-alt);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* LISTAS DE COMPROBACIÓN INTERACTIVAS */
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .checklist-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    /* BOTONES URL CON ACCIÓN "Abrir enlace en nueva ventana" */
+    .url-box {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .url-code {
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: var(--accent-bright);
+      word-break: break-all;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 6px 8px;
+      border-radius: 4px;
+    }
+
+    .url-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .open-url-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #0a0e1a;
+      font-weight: 700;
+      font-size: 0.84rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: filter 0.15s ease;
+    }
+
+    .open-url-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    /* BOTONES DE NAVEGACIÓN INFERIOR (ANTERIOR / SIGUIENTE) */
+    .tab-footer-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 26px;
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      position: sticky;
+      bottom: 10px;
+      z-index: 20;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .nav-step-btn {
+      min-height: 44px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--accent);
+      background: var(--bg-card-alt);
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.86rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      justify-content: center;
+      max-width: 48%;
+    }
+
+    .nav-step-btn.next-btn {
+      background: var(--accent);
+      color: #0a0e1a;
+    }
+
+    .nav-step-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    /* BOTONES FLOTANTES ARRASTRABLES (INICIO Y ARRIBA) */
+    .floating-draggable {
+      position: fixed;
+      z-index: 55;
+      min-height: 46px;
+      min-width: 86px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: #00d4ff;
+      border: 2px solid #00d4ff;
+      font-weight: 800;
+      font-size: 0.78rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .floating-draggable:active {
+      cursor: grabbing;
+      transform: scale(0.97);
+    }
+
+    #float-home-btn {
+      right: 12px;
+      bottom: 136px;
+    }
+
+    #float-top-btn {
+      right: 12px;
+      bottom: 80px;
+    }
+
+    /* ESTILOS ESPECIALES DE CRÉDITOS */
+    .credits-author-highlight {
+      font-size: clamp(1.9rem, 6vw, 3rem);
+      font-weight: 900;
+      text-align: center;
+      background: linear-gradient(90deg, #00d4ff, #38bdf8, #a855f7);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin: 12px 0 4px;
+      letter-spacing: -0.02em;
+    }
+
+    .credits-role-label {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    /* ANIMACIONES CSS PARA EL SVG HERO */
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes spinReverse {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+
+    @keyframes floatCardA {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes floatCardB {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(9px); }
+    }
+
+    @keyframes pulseCore {
+      0%, 100% { transform: scale(1); opacity: 0.92; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+
+    @keyframes dataFlowDash {
+      to { stroke-dashoffset: -48; }
+    }
+
+    @keyframes scanBeamMove {
+      0%, 100% { transform: translateY(0px); opacity: 0.35; }
+      50% { transform: translateY(160px); opacity: 0.85; }
+    }
+
+    .svg-orbit-cw {
+      transform-origin: 200px 250px;
+      animation: spinSlow 26s linear infinite;
+    }
+
+    .svg-orbit-ccw {
+      transform-origin: 200px 250px;
+      animation: spinReverse 19s linear infinite;
+    }
+
+    .svg-core-pulse {
+      transform-origin: 200px 250px;
+      animation: pulseCore 3.2s ease-in-out infinite;
+    }
+
+    .svg-float-1 {
+      animation: floatCardA 4.2s ease-in-out infinite;
+    }
+
+    .svg-float-2 {
+      animation: floatCardB 4.8s ease-in-out infinite;
+    }
+
+    .svg-stream-line {
+      stroke-dasharray: 8 6;
+      animation: dataFlowDash 1.8s linear infinite;
+    }
+
+    .svg-scanner-bar {
+      animation: scanBeamMove 5s ease-in-out infinite;
+    }
+
+    body.svg-paused .svg-orbit-cw,
+    body.svg-paused .svg-orbit-ccw,
+    body.svg-paused .svg-core-pulse,
+    body.svg-paused .svg-float-1,
+    body.svg-paused .svg-float-2,
+    body.svg-paused .svg-stream-line,
+    body.svg-paused .svg-scanner-bar {
+      animation-play-state: paused !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .svg-orbit-cw,
+      .svg-orbit-ccw,
+      .svg-core-pulse,
+      .svg-float-1,
+      .svg-float-2,
+      .svg-stream-line,
+      .svg-scanner-bar {
+        animation: none !important;
+      }
+    }
+
+    /* OPTIMIZACIÓN ESPECÍFICA MÓVIL 360px (Samsung Galaxy A02s) */
+    @media (max-width: 400px) {
+      body {
+        padding-top: calc(var(--nav-height) + 52px);
+      }
+      main {
+        padding: 10px 8px;
+      }
+      .card {
+        padding: 12px;
+      }
+      .chip {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+      .floating-draggable {
+        min-width: 76px;
+        padding: 6px 10px;
+        font-size: 0.74rem;
+      }
+    }
+
+    /* HOJA DE ESTILOS DE IMPRESIÓN Y PDF A4 */
+    @page {
+      size: A4 portrait;
+      margin: 14mm 12mm;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        font-size: 11pt !important;
+      }
+      #reading-progress-container,
+      #main-nav,
+      #dr,
+      #utility-bar,
+      #search-results-panel,
+      .floating-draggable,
+      .tab-footer-nav,
+      .svg-controls-bar,
+      .copy-btn {
+        display: none !important;
+      }
+      .tab-section {
+        display: block !important;
+        margin-bottom: 18px !important;
+        page-break-inside: auto;
+      }
+      .card, .pedagogy-box, .step-item, .prompt-block, details.qa-card, .qa-body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #94a3b8 !important;
+        box-shadow: none !important;
+      }
+      h1, h2, h3, h4, p, li, td, th, .prompt-text, .credits-author-highlight {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        background: none !important;
+      }
+      .svg-hero-wrapper {
+        max-width: 250px !important;
+        margin: 8px auto !important;
+        border: 1px solid #000000 !important;
+        background: #f8fafc !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE PROGRESO SUPERIOR -->
+  <div id="reading-progress-container" aria-hidden="true">
+    <div id="reading-progress-bar"></div>
+  </div>
+
+  <!-- FUENTE ÚNICA OCULTA DEL SVG ANIMADO (Se extrae y elimina del DOM al iniciar) -->
+  <div id="svg-master-template-holder" style="display:none;" aria-hidden="true">
+    <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración animada de la Revolución Documental con Google Gemini transformando datos en PDF, Excel, Presentaciones y Word">
+      <defs>
+        <linearGradient id="__PREFIX__bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#070b16"/>
+          <stop offset="50%" stop-color="#0f1d36"/>
+          <stop offset="100%" stop-color="#080d1a"/>
+        </linearGradient>
+        <radialGradient id="__PREFIX__coreGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.95"/>
+          <stop offset="45%" stop-color="#38bdf8" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="__PREFIX__gemStar" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="45%" stop-color="#00d4ff"/>
+          <stop offset="100%" stop-color="#a855f7"/>
+        </linearGradient>
+        <linearGradient id="__PREFIX__pdfGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ef4444"/>
+          <stop offset="100%" stop-color="#991b1b"/>
+        </linearGradient>
+        <linearGradient id="__PREFIX__xlsxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#10b981"/>
+          <stop offset="100%" stop-color="#065f46"/>
+        </linearGradient>
+        <linearGradient id="__PREFIX__pptxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f59e0b"/>
+          <stop offset="100%" stop-color="#92400e"/>
+        </linearGradient>
+        <linearGradient id="__PREFIX__docxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#3b82f6"/>
+          <stop offset="100%" stop-color="#1e3a8a"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Fondo Tecnológico 4:5 -->
+      <rect width="400" height="500" fill="url(#__PREFIX__bgGrad)"/>
+
+      <!-- Cuadrícula de Perspectiva Digital -->
+      <g stroke="#1e3a5f" stroke-width="0.8" opacity="0.45">
+        <line x1="0" y1="60" x2="400" y2="60"/>
+        <line x1="0" y1="120" x2="400" y2="120"/>
+        <line x1="0" y1="180" x2="400" y2="180"/>
+        <line x1="0" y1="250" x2="400" y2="250"/>
+        <line x1="0" y1="320" x2="400" y2="320"/>
+        <line x1="0" y1="380" x2="400" y2="380"/>
+        <line x1="0" y1="440" x2="400" y2="440"/>
+        <line x1="60" y1="0" x2="60" y2="500"/>
+        <line x1="130" y1="0" x2="130" y2="500"/>
+        <line x1="200" y1="0" x2="200" y2="500"/>
+        <line x1="270" y1="0" x2="270" y2="500"/>
+        <line x1="340" y1="0" x2="340" y2="500"/>
+      </g>
+
+      <!-- Haz Escáner de Ingesta Documental (+2.800 págs BOE / CSV) -->
+      <rect class="svg-scanner-bar" x="25" y="150" width="350" height="3" fill="#00d4ff" opacity="0.6"/>
+
+      <!-- Anillos Orbitales de Procesamiento IA -->
+      <g class="svg-orbit-cw">
+        <circle cx="200" cy="250" r="145" fill="none" stroke="#1e3a5f" stroke-width="1.5" stroke-dasharray="14 8"/>
+        <circle cx="200" cy="105" r="5" fill="#00d4ff"/>
+        <circle cx="200" cy="395" r="5" fill="#a855f7"/>
+        <circle cx="55" cy="250" r="4" fill="#38bdf8"/>
+        <circle cx="345" cy="250" r="4" fill="#10b981"/>
+      </g>
+
+      <g class="svg-orbit-ccw">
+        <circle cx="200" cy="250" r="105" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="6 10" opacity="0.7"/>
+        <polygon points="200,140 205,150 195,150" fill="#00d4ff"/>
+        <polygon points="200,360 205,350 195,350" fill="#f59e0b"/>
+      </g>
+
+      <!-- Líneas de Conexión Energética hacia los 4 Formatos Documentales -->
+      <g fill="none" stroke-width="2.2">
+        <path class="svg-stream-line" d="M200,250 L85,115" stroke="#ef4444"/>
+        <path class="svg-stream-line" d="M200,250 L315,115" stroke="#10b981"/>
+        <path class="svg-stream-line" d="M200,250 L85,385" stroke="#f59e0b"/>
+        <path class="svg-stream-line" d="M200,250 L315,385" stroke="#3b82f6"/>
+      </g>
+
+      <!-- Núcleo Central Google Gemini AI -->
+      <g class="svg-core-pulse">
+        <circle cx="200" cy="250" r="68" fill="url(#__PREFIX__coreGlow)"/>
+        <circle cx="200" cy="250" r="38" fill="#0b1329" stroke="#00d4ff" stroke-width="2.5"/>
+        <!-- Estrella Chispa Gemini de 4 Puntas -->
+        <path d="M200,214 C203,238 212,247 236,250 C212,253 203,262 200,286 C197,262 188,253 164,250 C188,247 197,238 200,214 Z" fill="url(#__PREFIX__gemStar)"/>
+        <text x="200" y="303" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="bold" font-family="sans-serif" letter-spacing="1.5">GEMINI ENGINE</text>
+      </g>
+
+      <!-- NODO 1: Informe Atlas PDF (Arriba Izquierda) -->
+      <g class="svg-float-1">
+        <rect x="28" y="52" width="112" height="86" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="2"/>
+        <rect x="38" y="62" width="44" height="16" rx="4" fill="url(#__PREFIX__pdfGrad)"/>
+        <text x="60" y="73" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold" font-family="sans-serif">PDF</text>
+        <text x="90" y="73" fill="#94a3b8" font-size="8" font-family="sans-serif">Atlas 10p</text>
+        <!-- Mini gráfico y líneas maquetadas -->
+        <line x1="38" y1="88" x2="126" y2="88" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="38" y1="97" x2="105" y2="97" stroke="#94a3b8" stroke-width="2"/>
+        <rect x="38" y="108" width="14" height="18" fill="#ef4444" rx="2"/>
+        <rect x="56" y="103" width="14" height="23" fill="#f87171" rx="2"/>
+        <rect x="74" y="112" width="14" height="14" fill="#fca5a5" rx="2"/>
+        <circle cx="112" cy="116" r="11" fill="none" stroke="#ef4444" stroke-width="4" stroke-dasharray="45 20"/>
+      </g>
+
+      <!-- NODO 2: Dashboard Excel .XLSX (Arriba Derecha) -->
+      <g class="svg-float-2">
+        <rect x="260" y="52" width="112" height="86" rx="10" fill="#0f172a" stroke="#10b981" stroke-width="2"/>
+        <rect x="270" y="62" width="50" height="16" rx="4" fill="url(#__PREFIX__xlsxGrad)"/>
+        <text x="295" y="73" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold" font-family="sans-serif">XLSX</text>
+        <text x="328" y="73" fill="#94a3b8" font-size="8" font-family="sans-serif">5 Tabs</text>
+        <!-- Mini tabla y curva KPI -->
+        <rect x="270" y="85" width="90" height="22" fill="none" stroke="#10b981" stroke-width="1"/>
+        <line x1="270" y1="96" x2="360" y2="96" stroke="#10b981" stroke-width="1"/>
+        <line x1="300" y1="85" x2="300" y2="107" stroke="#10b981" stroke-width="1"/>
+        <line x1="330" y1="85" x2="330" y2="107" stroke="#10b981" stroke-width="1"/>
+        <polyline points="272,126 292,115 314,121 336,111 358,114" fill="none" stroke="#34d399" stroke-width="2.5"/>
+      </g>
+
+      <!-- NODO 3: Presentación .PPTX / Slides (Abajo Izquierda) -->
+      <g class="svg-float-2">
+        <rect x="28" y="346" width="112" height="86" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+        <rect x="38" y="356" width="52" height="16" rx="4" fill="url(#__PREFIX__pptxGrad)"/>
+        <text x="64" y="367" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold" font-family="sans-serif">SLIDES</text>
+        <text x="96" y="367" fill="#94a3b8" font-size="8" font-family="sans-serif">.PPTX</text>
+        <!-- Mini diapositiva estructurada -->
+        <rect x="38" y="380" width="92" height="40" rx="4" fill="#1e293b" stroke="#fbbf24" stroke-width="1"/>
+        <rect x="44" y="386" width="36" height="28" rx="2" fill="#f59e0b" opacity="0.8"/>
+        <line x1="86" y1="390" x2="122" y2="390" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="86" y1="399" x2="118" y2="399" stroke="#94a3b8" stroke-width="2"/>
+        <line x1="86" y1="408" x2="112" y2="408" stroke="#94a3b8" stroke-width="2"/>
+      </g>
+
+      <!-- NODO 4: Plantilla Editable Word .DOCX y Notebook (Abajo Derecha) -->
+      <g class="svg-float-1">
+        <rect x="260" y="346" width="112" height="86" rx="10" fill="#0f172a" stroke="#3b82f6" stroke-width="2"/>
+        <rect x="270" y="356" width="50" height="16" rx="4" fill="url(#__PREFIX__docxGrad)"/>
+        <text x="295" y="367" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold" font-family="sans-serif">DOCX</text>
+        <text x="326" y="367" fill="#94a3b8" font-size="8" font-family="sans-serif">BOE+Word</text>
+        <!-- Campos de formulario editables -->
+        <rect x="270" y="380" width="90" height="11" rx="2" fill="#1e293b" stroke="#60a5fa" stroke-width="1"/>
+        <rect x="270" y="396" width="90" height="11" rx="2" fill="#1e293b" stroke="#60a5fa" stroke-width="1"/>
+        <rect x="270" y="412" width="58" height="10" rx="2" fill="#3b82f6"/>
+      </g>
+
+      <!-- Cinta Superior e Inferior de Estado Documental -->
+      <rect x="50" y="14" width="300" height="24" rx="12" fill="#0f172a" stroke="#1e3a5f" stroke-width="1.2"/>
+      <text x="200" y="30" text-anchor="middle" fill="#00d4ff" font-size="10" font-weight="bold" font-family="sans-serif">INGESTA: CSV + PDF (+2.800 PÁGS) → IA</text>
+
+      <rect x="40" y="458" width="320" height="26" rx="13" fill="#0f172a" stroke="#00d4ff" stroke-width="1.2"/>
+      <text x="200" y="475" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="bold" font-family="sans-serif">FLASH 3.8 • NOTEBOOK • HUBSPOT AI NOTETAKER</text>
+    </svg>
+  </div>
+
+  <!-- BARRA DE NAVEGACIÓN FIJA SUPERIOR -->
+  <nav id="main-nav" aria-label="Navegación principal del tutorial">
+    <button class="chip" id="mb" aria-label="Abrir índice" aria-expanded="false">☰ Índice</button>
+    <button class="chip active-tab" data-tab-target="0">INICIO</button>
+    <button class="chip" data-tab-target="1">CONCEPTOS</button>
+    <button class="chip" data-tab-target="2">PROCEDIMIENTO</button>
+    <button class="chip" data-tab-target="3">PRÁCTICA</button>
+    <button class="chip" data-tab-target="4">PROMPTS</button>
+    <button class="chip" data-tab-target="5">33 Preguntas (Q&amp;A)</button>
+    <button class="chip" data-tab-target="6">ERRORES</button>
+    <button class="chip" data-tab-target="7">RESUMEN</button>
+    <button class="chip" data-tab-target="8">FUENTES</button>
+    <button class="chip" data-tab-target="9">CRÉDITOS</button>
+  </nav>
+
+  <!-- PANEL LATERAL DEL ÍNDICE (#dr) -->
+  <div id="dr" role="navigation" aria-label="Índice completo de secciones">
+    <div class="dr-header">Índice del Tutorial</div>
+  </div>
+
+  <!-- BARRA SECUNDARIA DE ACCESIBILIDAD, BÚSQUEDA E IMPRESIÓN -->
+  <div id="utility-bar" role="region" aria-label="Herramientas de lectura y búsqueda">
+    <div class="search-wrapper">
+      <input type="search" id="global-search" placeholder="Buscar en el tutorial (ej. BOE, CSV, Flash)..." aria-label="Buscar en todo el tutorial">
+      <button id="clear-search-btn" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">✕</button>
+    </div>
+    <div class="toolbar-actions">
+      <button class="tool-btn" id="font-dec-btn" title="Reducir tamaño de letra" aria-label="Reducir tamaño de letra">A−</button>
+      <button class="tool-btn" id="font-inc-btn" title="Aumentar tamaño de letra" aria-label="Aumentar tamaño de letra">A+</button>
+      <button class="tool-btn" id="theme-toggle-btn" title="Cambiar entre tema oscuro y claro" aria-label="Cambiar tema visual">☀/☾</button>
+      <button class="tool-btn" id="print-pdf-btn" title="Imprimir o guardar como PDF A4" aria-label="Imprimir o guardar PDF">🖨 PDF</button>
+    </div>
+  </div>
+
+  <!-- PANEL DE RESULTADOS DE BÚSQUEDA -->
+  <div id="search-results-panel" role="region" aria-live="polite"></div>
+
+  <!-- CONTENIDO PRINCIPAL DE LAS 10 PESTAÑAS -->
+  <main id="tutorial-main">
+
+    <!-- ==========================================
+         PESTAÑA 0: INICIO (HOME)
+         ========================================== -->
+    <section class="tab-section active-section" id="sec-0" data-t="INICIO">
+      <div class="card">
+        <span class="badge">Manual Interactivo Nivel 0 a PRO</span>
+        <h1>Revolución Documental con Google Gemini <span class="author-byline-title">by Rubén Sbarsky</span></h1>
+        <p>Bienvenido a la guía técnica y práctica completa basada en el material sobre la <strong>Revolución Documental con Google Gemini</strong> (con referencias al análisis audiovisual de Alejavi Rivera). Aprenderás desde cero y paso a paso cómo generar, previsualizar, editar selectivamente y exportar documentos profesionales en formato <strong>PDF maquetado, libros de Excel (.xlsx) con Dashboard, presentaciones (.pptx / Google Slides) y plantillas editables de Word (.docx)</strong> directamente desde el chat gratuito de Google Gemini.</p>
+
+        <!-- SVG HERO COMPARTIDO (INSTANCIA 1: INICIO) -->
+        <div class="svg-hero-wrapper" id="svg-container-home" role="region" aria-label="Ilustración principal animada sobre la generación documental en Google Gemini">
+          <div class="svg-hero-mount" id="svg-mount-home"></div>
+        </div>
+
+        <div class="svg-controls-bar">
+          <button class="chip" id="ix" type="button">☰ Ver índice</button>
+          <button class="chip" id="toggle-svg-anim-home" type="button">⏸ Pausar / Reanudar animación</button>
+        </div>
+
+        <div class="pedagogy-grid">
+          <div class="pedagogy-box">
+            <h4>¿QUÉ ES?</h4>
+            <p>Es el nuevo entorno documental integrado dentro de Google Gemini que transforma instrucciones en lenguaje natural, archivos PDF masivos y bases de datos CSV en documentos terminados, editables y listos para descargar.</p>
+          </div>
+          <div class="pedagogy-box for-box">
+            <h4>¿PARA QUÉ SIRVE?</h4>
+            <p>Para automatizar informes tipo Atlas PDF, procesar leyes de más de 2.800 páginas (como códigos del BOE), construir cuadros de mando en Excel con múltiples pestañas y diseñar presentaciones validadas en segundos.</p>
+          </div>
+          <div class="pedagogy-box why-box">
+            <h4>¿POR QUÉ IMPORTA?</h4>
+            <p>Porque todo el flujo principal funciona con una <strong>cuenta gratuita de Google</strong> utilizando el modelo Gemini 3.8 Flash, ahorrando horas de maquetación manual y procesamiento de datos.</p>
+          </div>
+        </div>
+
+        <h3>Mapa Maestro Jerárquico del Tutorial</h3>
+        <div class="card" style="background: var(--bg-card-alt);">
+          <ul>
+            <li><strong>Módulo 0 — Introducción y Requisitos de Partida:</strong> Acceso sin coste con cuenta gratuita de Google y las 3 áreas de la interfaz (Cuadro de Entrada, Panel Central y Visor/Widget interactivo).</li>
+            <li><strong>Módulo 1 — Arquitectura de Modelos en Gemini:</strong> Comparativa real entre <strong>Gemini 3.8 Flash</strong> (velocidad y estabilidad gratuita) y <strong>Gemini 4 Argon</strong> (razonamiento profundo y gestión de bloqueos en tareas multifuente).</li>
+            <li><strong>Módulo 2 — Los 7 Casos de Uso Prácticos Paso a Paso:</strong>
+              <ol>
+                <li>Investigación temática, presentación y conversión en menos de 10 segundos a PDF maquetado.</li>
+                <li>Procesamiento de PDFs extensos (+50 págs, Estadísticas Mundiales de la Salud 2026), Informe Atlas PDF de 10 páginas y edición selectiva de páginas y textos.</li>
+                <li>Ingesta normativa masiva (+2.800 págs del Código de Consumo del BOE) y generación simultánea de guía PDF (14 págs) + formulario Word editable (<code>.docx</code>).</li>
+                <li>Transformación de datos en bruto (CSV de Accidentes de Tráfico en Madrid 2026) a libros de Excel (<code>.xlsx</code>) con 5 pestañas operativas y Dashboard visual.</li>
+                <li>Creación de presentaciones desde Datasets (CSV de Meteoritos) aplicando el protocolo de validación estructural previa.</li>
+                <li>Análisis multifuente combinado (CSV de Emisiones de CO2 + PDF de Cambio Climático) y comparativa operativa entre Flash y Argon.</li>
+                <li>Configuración de Cuadernos Virtuales en <strong>Gemini Notebook</strong> ("estudia y aprende") para inglés y creación de PDFs adaptativos y hojas de Excel de vocabulario.</li>
+              </ol>
+            </li>
+            <li><strong>Módulo 3 — Integraciones de Productividad:</strong> Conexión con <strong>HubSpot Smart CRM</strong> y su asistente <strong>AI Notetaker</strong> para Google Meet, Zoom y Microsoft Teams.</li>
+            <li><strong>Módulos 4 al 10:</strong> Proyectos integradores, Compendio de los 12 Prompts oficiales, Banco de 33 Preguntas graduadas (Básico, Avanzado y PRO), Solución de Errores, Glosario y Fuentes.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <span>Inicio del Tutorial</span>
+        <button class="nav-step-btn next-btn" onclick="go(1)">Siguiente: CONCEPTOS →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 1: CONCEPTOS (Módulos 0, 1 y 3)
+         ========================================== -->
+    <section class="tab-section" id="sec-1" data-t="CONCEPTOS">
+      <div class="card">
+        <span class="badge">Módulos 0, 1 y 3</span>
+        <h2>Conceptos Fundamentales, Interfaz y Arquitectura de Modelos</h2>
+
+        <div class="pedagogy-grid">
+          <div class="pedagogy-box">
+            <h4>¿QUÉ VAS A APRENDER AQUÍ?</h4>
+            <p>Cómo funciona el entorno gratuito de Google Gemini, cuáles son las tres partes de su pantalla, por qué el modelo gratuito supera al de pago en compilación multifuente y cómo complementar el flujo con HubSpot AI Notetaker.</p>
+          </div>
+          <div class="pedagogy-box for-box">
+            <h4>REQUISITO PREVIO</h4>
+            <p>Ningún conocimiento técnico previo. Solo necesitas disponer de una <strong>cuenta gratuita de Google</strong> y un navegador web en tu ordenador o teléfono móvil.</p>
+          </div>
+        </div>
+
+        <h3>0.1 Perfil de Acceso y Entorno sin Coste (Cuenta Gratuita vs. De Pago)</h3>
+        <p>Google Gemini ha incorporado capacidades nativas para generar, previsualizar y editar directamente archivos PDF, presentaciones de diapositivas, documentos de Word y hojas de cálculo de Excel. Todo el flujo principal de este manual puede realizarse con una <strong>cuenta gratuita de Google</strong>, sin pagar suscripciones mensuales, lo que democratiza el acceso para estudiantes, profesionales y autodidactas.</p>
+
+        <h3>0.2 Las 3 Zonas de la Interfaz de Google Gemini y Gemini Notebook</h3>
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Cuadro de Entrada (Prompt Box):</strong> Situado en la zona inferior de la pantalla. Aquí escribes tus instrucciones en lenguaje natural (prompts) y pulsas el botón de suma (<code>+</code>) para adjuntar archivos PDF o bases de datos CSV desde tu dispositivo.
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Panel Central de Conversación:</strong> Es el espacio donde la inteligencia artificial responde con explicaciones, esquemas previos de validación y confirmaciones de los pasos de procesamiento.
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Visor / Widget de Documentos Integrado:</strong> Es el panel interactivo desplegable que aparece cuando Gemini termina de crear un archivo. Permite previsualizar todas las páginas o pestañas, ampliarlas a pantalla completa, hacer clic directamente sobre títulos o textos para editarlos a mano, pedir cambios sobre una sola página y exportar el archivo final (<code>.pdf</code>, <code>.xlsx</code>, <code>.pptx</code>, <code>.docx</code> o Google Drive).
+          </li>
+        </ol>
+
+        <h3>1.1 y 1.2 Comparativa de Modelos: Gemini 3.8 Flash vs. Gemini 4 Argon</h3>
+        <p>Comprender cómo se comporta cada modelo de inteligencia artificial dentro de Gemini te ahorrará frustraciones y tiempos muertos:</p>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Característica Operativa</th>
+                <th>Modelo Gemini 3.8 Flash</th>
+                <th>Modelo Gemini 4 Argon</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Tipo de Cuenta</strong></td>
+                <td>Predeterminado en cuentas gratuitas de Google.</td>
+                <td>Disponible en planes de suscripción de pago.</td>
+              </tr>
+              <tr>
+                <td><strong>Velocidad de Compilación</strong></td>
+                <td>Ultra rápida (convierte presentaciones a PDF en menos de 10 segundos).</td>
+                <td>Más lento debido a su proceso de razonamiento profundo.</td>
+              </tr>
+              <tr>
+                <td><strong>Estabilidad en Tareas Multifuente (CSV + PDF)</strong></td>
+                <td><strong>Excelente:</strong> Procesa y entrega borradores, tablas y documentos completos sin colgarse.</td>
+                <td><strong>Limitada en alta densidad:</strong> Puede entrar en bucles de regeneración e interrumpir la creación del archivo final.</td>
+              </tr>
+              <tr>
+                <td><strong>Acabado Visual de Gráficos</strong></td>
+                <td>Funcional, claro y bien estructurado.</td>
+                <td>Mayor refinamiento estético inicial en gráficas aisladas.</td>
+              </tr>
+              <tr>
+                <td><strong>Recomendación del Manual</strong></td>
+                <td><strong>Opción recomendada</strong> para el 100% de proyectos documentales y multifuente.</td>
+                <td>Usar solo en consultas puntuales; cambiar a Flash si falla la compilación.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>3.1 Integración Productiva: HubSpot Smart CRM y AI Notetaker</h3>
+        <p>En entornos profesionales, generar informes y presentaciones es solo la mitad del trabajo; la otra mitad ocurre en las reuniones donde se presentan esos documentos. Para evitar que se pierdan acuerdos comerciales, el material integra <strong>HubSpot Smart CRM</strong> con su herramienta <strong>AI Notetaker</strong>:</p>
+        <ul>
+          <li><strong>Conexión automática:</strong> El asistente inteligente se une a tus videollamadas en <strong>Google Meet, Zoom o Microsoft Teams</strong>.</li>
+          <li><strong>Procesamiento en vivo:</strong> Graba y transcribe automáticamente toda la reunión de trabajo.</li>
+          <li><strong>Acción ejecutiva:</strong> Genera resúmenes ejecutivos, detecta los siguientes pasos acordados, actualiza las oportunidades dentro del CRM y redacta borradores de correos de seguimiento personalizados para enviar a los clientes.</li>
+        </ul>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(0)">← Anterior: INICIO</button>
+        <button class="nav-step-btn next-btn" onclick="go(2)">Siguiente: PROCEDIMIENTO →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 2: PROCEDIMIENTO (Módulo 2: Los 7 Casos)
+         ========================================== -->
+    <section class="tab-section" id="sec-2" data-t="PROCEDIMIENTO">
+      <div class="card">
+        <span class="badge">Módulo 2 Completo</span>
+        <h2>Tutorial Paso a Paso: Los 7 Casos de Uso Prácticos</h2>
+        <p>Cada uno de los siguientes 7 procedimientos sigue una estructura pedagógica rigurosa: <strong>Objetivo → Explicación sencilla → Pasos numerados (una acción por paso + motivo) → Resultado esperado → Solución de problemas</strong>. Puedes copiar cada prompt con un solo toque.</p>
+      </div>
+
+      <!-- CASO 1 -->
+      <div class="card">
+        <span class="badge">Caso de Uso 1</span>
+        <h3>2.1 Generación Directa de Presentaciones y Conversión Inmediata a PDF Maquetado</h3>
+        <p><strong>Objetivo:</strong> Investigar un tema desde cero, construir una presentación de diapositivas y transformar sus puntos clave en un informe PDF maquetado en menos de 10 segundos.</p>
+        <p><strong>Explicación sencilla:</strong> No necesitas tener un documento previo. Gemini investiga el tema por ti, diseña las diapositivas con infografías y luego recicla ese mismo contenido para entregarte un documento PDF ejecutivo listo para descargar.</p>
+
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Accede a Google Gemini:</strong> Abre tu navegador web e inicia sesión con tu cuenta gratuita de Google en la plataforma Gemini.
+            <div class="step-meta"><em>Motivo:</em> Habilitar el cuadro de instrucciones y el generador nativo de documentos.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Solicita la presentación inicial:</strong> Copia y pega el siguiente prompt en el cuadro de entrada inferior y pulsa Enviar.
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #5 — Caso 1 (Presentación Inicial)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c1-1">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c1-1">Crea una presentación sobre agentes de inteligencia artificial.</div>
+            </div>
+            <div class="step-meta"><em>Motivo:</em> Ordenar a Gemini que investigue el tema y maquete diapositivas con textos e infografías.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Revisa las diapositivas en el visor:</strong> Inspecciona la estructura visual creada en el widget interactivo del chat.
+            <div class="step-meta"><em>Motivo:</em> Comprobar que los conceptos clave están presentes antes de convertirlos a formato PDF.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">4</span><strong>Convierte la presentación en un PDF maquetado:</strong> En el mismo hilo de conversación, introduce este segundo prompt:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #1 — Caso 1 (Conversión a PDF)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c1-2">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c1-2">Pasa los puntos claves a un PDF bien maquetado.</div>
+            </div>
+            <div class="step-meta"><em>Motivo:</em> Sintetizar las diapositivas en un documento de lectura vertical en menos de 10 segundos.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">5</span><strong>Descarga el archivo final:</strong> Pulsa sobre el botón <strong>Exportar → Descargar PDF</strong> en la esquina del visor.
+            <div class="step-meta"><em>Resultado esperado:</em> Obtendrás tanto la presentación como el informe PDF maquetado guardados en tu equipo.</div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- CASO 2 -->
+      <div class="card">
+        <span class="badge">Caso de Uso 2</span>
+        <h3>2.2 Procesamiento de PDFs Extensos (+50 págs), Informe Atlas PDF y Edición Selectiva</h3>
+        <p><strong>Objetivo:</strong> Sintetizar un informe técnico extenso (ej. <em>PDF de Estadísticas Mundiales de la Salud 2026</em> de más de 50 páginas) en un <strong>Informe Atlas PDF de máximo 10 páginas</strong> y modificar elementos puntuales sin regenerar todo el archivo.</p>
+        <p><strong>Explicación sencilla:</strong> En lugar de leer 50 páginas técnicas, le indicas a Gemini qué temas extraer, cuántos gráficos incluir y para qué público escribir. Después, si una tabla en la página 6 no te convence, le pides que cambie solo esa tabla por un gráfico o editas los títulos con el ratón o el dedo.</p>
+
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Adjunta el documento PDF extenso:</strong> Abre un nuevo chat en Gemini, pulsa el botón <strong>+ (Adjuntar archivos)</strong> y sube el PDF de más de 50 páginas.
+            <div class="step-meta"><em>Motivo:</em> Fijar el documento como única fuente de verdad para evitar invenciones de datos.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Ejecuta el prompt de compilación Atlas PDF:</strong> Introduce la siguiente instrucción especificando extensión, audiencia y componentes gráficos:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #2 — Caso 2 (Informe Atlas PDF 10 Páginas)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c2-1">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c2-1">Analice todo este PDF transformándolo en un informe Atlas PDF con un máximo de 10 páginas. Este queremos que esté dirigido al público general y que trate puntos como la esperanza de vida saludable, la mortalidad prematura, vacunación y desigualdades globales. Además, quiero cuatro gráficos, dos páginas de comparaciones internacionales, fichas metodológicas y un glosario.</div>
+            </div>
+            <div class="step-meta"><em>Motivo:</em> Acotar exactamente el límite de 10 páginas y obligar a incluir fichas metodológicas, glosario y 4 gráficos.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Amplía y revisa el informe:</strong> Pulsa el botón <strong>Ampliar</strong> en el visor para examinar las 10 páginas generadas.
+            <div class="step-meta"><em>Motivo:</em> Identificar si alguna página concreta (como la página 6 de comparaciones internacionales) requiere ajustes visuales.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">4</span><strong>Realiza una edición selectiva (Iteración en una sola página):</strong> Escribe el siguiente prompt para sustituir la tabla de la página de comparación por un gráfico con advertencia visual:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #4 — Caso 2 (Sustitución Selectiva de Tabla por Gráfico)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c2-2">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c2-2">En esta página de comparación voy a querer que sustituya toda esta tabla por un gráfico que muestre el valor y el año disponible para cada territorio junto a alguna información más como por ejemplo que me añada una advertencia visual.</div>
+            </div>
+            <div class="step-meta"><em>Motivo:</em> Actualizar únicamente esa página conservando intactas las otras 9 páginas del documento.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">5</span><strong>Edita textos manualmente y exporta:</strong> Haz clic directamente sobre cualquier encabezado o palabra (por ejemplo, cambiar "España" o un título) dentro del visor para corregirlo al instante, y exporta el PDF a tu dispositivo o a <strong>Google Drive</strong>.
+            <div class="step-meta"><em>Resultado esperado:</em> Informe Atlas PDF de 10 páginas personalizado al detalle sin haber usado programas de diseño externos.</div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- CASO 3 -->
+      <div class="card">
+        <span class="badge">Caso de Uso 3</span>
+        <h3>2.3 Ingesta Normativa de Gran Volumen (+2.800 págs BOE) y Creación Simultánea de PDF + Word (.docx)</h3>
+        <p><strong>Objetivo:</strong> Procesar un documento jurídico masivo (ej. <em>Código de Consumo del BOE</em> de más de 2.800 páginas) y generar en una sola respuesta dos archivos distintos: una guía educativa PDF de 14 páginas y una plantilla editable de reclamación en formato Word (<code>.docx</code>).</p>
+        <p><strong>Explicación sencilla:</strong> Buscar artículos legales entre 2.800 páginas es inabarcable para un ciudadano. Con un único prompt, Gemini resume la ley en árboles de decisión visuales (PDF) y además te entrega la hoja de reclamación en Word con los huecos listos para rellenar.</p>
+
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Sube el PDF normativo masivo:</strong> Haz clic en el botón <strong>+</strong> y adjunta el archivo PDF del Código de Consumo del BOE (+2.800 páginas).
+            <div class="step-meta"><em>Motivo:</em> Cargar el corpus legal completo en la ventana de contexto de Gemini.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Solicita la doble generación simultánea (PDF + Word):</strong> Copia y envía el siguiente prompt dual:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #10 — Caso 3 (Guía PDF 14 págs + Plantilla Word Editable)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c3-1">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c3-1">Analice el código de consumo del BOE creando una guía PDF visual de unas 14 páginas tituladas como 'Tus derechos como consumidor'... árboles de decisión, diferentes tablas de comparación, ejemplos hipotéticos... y además genere un Word editable para poder presentar una reclamación con todos los campos vacíos necesarios que debería de rellenar.</div>
+            </div>
+            <div class="step-meta"><em>Motivo:</em> Instruir a Gemini para que despliegue dos widgets independientes en la misma respuesta.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Descarga y utiliza ambos activos:</strong> Revisa en el primer widget la guía PDF de 14 páginas ("Tus derechos como consumidor") y descarga desde el segundo widget el archivo <code>.docx</code> editable (que incluye datos del reclamante, datos de la empresa, descripción de hechos, motivos y petición concreta).
+            <div class="step-meta"><em>Resultado esperado:</em> Guía divulgativa en PDF y formulario oficial en Word listo para abrir y completar en tu ordenador o móvil.</div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- CASO 4 -->
+      <div class="card">
+        <span class="badge">Caso de Uso 4</span>
+        <h3>2.4 Transformación de Datos en Bruto (CSV) a Libros de Excel (.xlsx) Multipestaña con Dashboard</h3>
+        <p><strong>Objetivo:</strong> Convertir un archivo plano de datos separados por comas (ej. <em>CSV de Accidentes de Tráfico en Madrid 2026</em> con miles de registros) en un libro profesional de Microsoft Excel (<code>.xlsx</code>) organizado en 5 pestañas con fórmulas y gráficos automáticos.</p>
+        <p><strong>Explicación sencilla:</strong> Un archivo CSV es solo texto crudo difícil de leer. Gemini lo transforma en un archivo Excel estructurado que conserva tus datos originales sin perder ni una fila y añade diccionarios, controles de calidad, métricas calculadas y un panel visual de gráficas.</p>
+
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Adjunta el archivo CSV en bruto:</strong> Pulsa el botón <strong>+</strong> y selecciona tu dataset CSV (ej. Accidentes de Tráfico en Madrid 2026).
+            <div class="step-meta"><em>Motivo:</em> Suministrar las miles de filas que servirán de base para los cálculos cuantitativos.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Envía el prompt de arquitectura de 5 pestañas:</strong> Copia y ejecuta esta instrucción detallada:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #8 — Caso 4 (Excel Multipestaña + Dashboard)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c4-1">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c4-1">Analice por mí el dataset y que con todo eso me cree un Excel con diferentes pestañas que yo necesito como podría ser el origen, el diccionario, la calidad, métricas claves y un panel, preservando todos los datos en bruto y añadiendo algunas gráficas más visuales por mes, días y franjas horarias y algunas otras categorías.</div>
+            </div>
+            <div class="step-meta"><em>Motivo:</em> La frase "preservando todos los datos en bruto" es vital para impedir que la IA recorte registros originales.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Verifica las 5 pestañas en el visor interactivo:</strong> Haz clic en <strong>Abrir/Ampliar</strong> y comprueba cada hoja generada:
+            <ul>
+              <li><strong>Origen:</strong> Mantiene intactos todos los datos en bruto del CSV.</li>
+              <li><strong>Diccionario:</strong> Define el significado de cada columna o variable.</li>
+              <li><strong>Calidad:</strong> Audita la integridad de los registros y valores nulos.</li>
+              <li><strong>Métricas claves:</strong> Incluye fórmulas automáticas (total de accidentes únicos, promedio de implicados por siniestro, positivos en alcohol o drogas, desglose por distritos y franjas horarias).</li>
+              <li><strong>Panel (Dashboard):</strong> Muestra gráficos de barras, líneas y sectores integrados en la hoja.</li>
+            </ul>
+          </li>
+          <li class="step-item">
+            <span class="step-num">4</span><strong>Descarga el libro ejecutable:</strong> Pulsa en <strong>Descargar</strong> arriba a la derecha para obtener tu archivo <code>.xlsx</code>.
+            <div class="step-meta"><em>Resultado esperado:</em> Libro de Excel multipestaña funcional con datos íntegros y cuadro de mando gráfico.</div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- CASO 5 -->
+      <div class="card">
+        <span class="badge">Caso de Uso 5</span>
+        <h3>2.5 Creación de Presentaciones desde Datasets y Protocolo de Validación Estructural Previa</h3>
+        <p><strong>Objetivo:</strong> Crear presentaciones ejecutivas a partir de un dataset CSV (ej. <em>CSV sobre Meteoritos</em> con masa, clase e identificación) aplicando el método profesional de validación de estructura antes de compilar las diapositivas.</p>
+        <p><strong>Explicación sencilla:</strong> Puedes pedir una presentación directa de 12 diapositivas o, mejor aún, ordenarle a Gemini que primero te escriba qué irá en cada una de las 10 diapositivas. Así corriges o apruebas el guion antes de que la IA dibuje la presentación final.</p>
+
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Sube el dataset CSV:</strong> Adjunta con el botón <strong>+</strong> el archivo CSV sobre Meteoritos.
+            <div class="step-meta"><em>Motivo:</em> Aportar los registros cuantitativos de masa, tipo y ubicación.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Opción A — Generación Directa (12 diapositivas rápidas):</strong> Si buscas velocidad inmediata, utiliza este prompt:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #6 — Caso 5 (Presentación Directa 12 Diapositivas)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c5-1">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c5-1">Analice todo ese dataset que le acabo de introducir para que me cree una presentación de 12 diapositivas que sea muy simple para poder visualizarla rápidamente.</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Opción B — Protocolo de Validación Estructural Previa (Recomendado PRO):</strong> Para controlar el contenido exacto de cada diapositiva antes de diseñarla, envía este prompt:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #7 — Caso 5 (Validación Previa de Estructura 10 Diapositivas)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c5-2">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c5-2">Me gustaría crear otra presentación, en este caso unas 10 diapositivas, pero antes de generar la presentación me gustaría que me dijeses una estructura con la información que va a aparecer en cada una de estas con el objetivo de validarlo antes de crearlo.</div>
+            </div>
+            <div class="step-meta"><em>Motivo:</em> Evitar generaciones aleatorias y revisar el índice numerado (Portada, contexto, datos clave, conclusión).</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">4</span><strong>Aprueba y exporta:</strong> Una vez revisado el esquema en el chat, responde <code>"Me parece genial, créala."</code> y exporta el resultado en <strong>Google Slides</strong>, <strong>PDF</strong> o <strong>Microsoft PowerPoint (<code>.pptx</code>)</strong>.
+          </li>
+        </ol>
+      </div>
+
+      <!-- CASO 6 -->
+      <div class="card">
+        <span class="badge">Caso de Uso 6</span>
+        <h3>2.6 Análisis Multifuente Combinado (CSV + PDF) y Comparativa Operativa (Flash vs. Argon)</h3>
+        <p><strong>Objetivo:</strong> Cruzar simultáneamente datos numéricos (<em>CSV de Emisiones de CO2 por países</em>) con literatura técnica (<em>PDF del Informe de Cambio Climático</em>) para construir una presentación, un PDF, una narrativa y gráficos unificados.</p>
+        <p><strong>Explicación sencilla:</strong> Aquí comprobamos en la práctica cómo responde Gemini cuando le exigimos mezclar archivos de distinta naturaleza y generar varios formatos a la vez.</p>
+
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Adjunta múltiples fuentes heterogéneas:</strong> En un chat nuevo, pulsa <strong>+</strong> y sube a la vez el archivo <strong>CSV de Emisiones de CO2</strong> y el <strong>PDF del Informe de Cambio Climático</strong>.
+            <div class="step-meta"><em>Motivo:</em> Obligar al motor de IA a correlacionar métricas tabulares con contexto documental.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Ejecuta el prompt de síntesis multifuente:</strong>
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #11 — Caso 6 (Análisis Multifuente CSV + PDF)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c6-1">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c6-1">Analice todo este informe y nos saque los datos clave, nos genere una presentación, un PDF y que nos construya también una historia, y además de todo esto le vamos a pedir también que nos añada diferentes gráficos.</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Selecciona el modelo adecuado (Lección Técnica Clave):</strong>
+            <ul>
+              <li>Con <strong>Gemini 3.8 Flash (Gratuito)</strong>: El sistema entrega sin bloqueos la estructura previa del PDF, el borrador de las 12 diapositivas y las tablas de datos gráficos.</li>
+              <li>Con <strong>Gemini 4 Argon (De Pago)</strong>: Ante esta alta densidad multifuente, puede quedarse atrapado en bucles de regeneración sin entregar el archivo compilado. <strong>Solución:</strong> Usa siempre Flash para compilar documentos multifuente.</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <!-- CASO 7 -->
+      <div class="card">
+        <span class="badge">Caso de Uso 7</span>
+        <h3>2.7 Configuración de Cuadernos Virtuales en Gemini Notebook y Activos Personalizados</h3>
+        <p><strong>Objetivo:</strong> Crear un entorno de estudio autodidacta en <strong>Gemini Notebook</strong> (ej. aprender inglés), realizar cuestionarios diagnósticos y generar un PDF adaptativo de 10 páginas según tus errores reales junto con un Excel interactivo de vocabulario.</p>
+
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Crea el cuaderno virtual:</strong> Entra en la función <strong>Gemini Notebook</strong>, selecciona <strong>"estudia y aprende" → Crear nuevo cuaderno</strong> y nómbralo (ej. <em>"Inglés"</em>).
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Configura las 4 áreas pedagógicas del itinerario:</strong> Introduce este prompt inicial:
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #12 — Caso 7 (Configuración de Gemini Notebook)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c7-1">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c7-1">El objetivo sería hablar inglés con fluidez en situaciones reales ya sean viajes, reuniones, entrevistas y demás y que nos organice sus fuentes en cuatro áreas tanto gramática, vocabulario, listening y speaking.</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Completa las lecciones y cuestionarios diagnósticos:</strong> Interactúa con los resúmenes y responde a los tests diagnósticos que el cuaderno genera automáticamente.
+            <div class="step-meta"><em>Motivo:</em> Alimentar el historial del cuaderno con tus aciertos y tus fallos específicos.</div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">4</span><strong>Genera el PDF adaptativo basado en tus fallos históricos:</strong>
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #3 — Caso 7 (PDF Adaptativo de 10 Páginas según Diagnósticos)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c7-2">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c7-2">Con los resultados de todos los diagnósticos que nos ha hecho previamente, nos genere un PDF con las 10 páginas más importantes que realmente se adecuen para nosotros.</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">5</span><strong>Transforma ese PDF en una hoja de Excel interactiva de repaso rápido:</strong>
+            <div class="prompt-block">
+              <div class="prompt-header">
+                <span class="prompt-label">Prompt #9 — Caso 7 (Excel de Vocabulario y Expresiones desde PDF)</span>
+                <button class="copy-btn" type="button" data-copy-target="p-c7-3">📋 COPIAR PROMPT</button>
+              </div>
+              <div class="prompt-text" id="p-c7-3">A partir de este PDF me cree ese Excel con algunos datos principales y expresiones para poder visualizar todo esto de un vistazo y aprenda de una forma más rápida y sencilla.</div>
+            </div>
+            <div class="step-meta"><em>Resultado esperado:</em> Manual PDF personalizado de 10 páginas + Tabla Excel interactiva para autoevaluación de términos y frases clave.</div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(1)">← Anterior: CONCEPTOS</button>
+        <button class="nav-step-btn next-btn" onclick="go(3)">Siguiente: PRÁCTICA →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 3: PRÁCTICA (Módulo 5 + Ejercicios + Checklists)
+         ========================================== -->
+    <section class="tab-section" id="sec-3" data-t="PRÁCTICA">
+      <div class="card">
+        <span class="badge">Módulo 5 y Autoevaluación</span>
+        <h2>Proyectos Integradores Prácticos y Ejercicios Resueltos</h2>
+        <p>Pon en práctica lo aprendido con estos dos proyectos integradores diseñados para aprendizaje autodidacta. Tu progreso en las casillas de verificación se guarda automáticamente en tu navegador.</p>
+      </div>
+
+      <!-- PROYECTO 1 -->
+      <div class="card">
+        <span class="badge">Proyecto Integrador 1</span>
+        <h3>5.1 Sistema de Auditoría Rápida de Normativas y Generación de Documentación Operativa Legal</h3>
+        <p><strong>Objetivo del Proyecto:</strong> Transformar un reglamento o código legal masivo (como el Código de Consumo del BOE de +2.800 páginas) en un paquete ciudadano compuesto por una guía visual de 14 páginas en PDF y un formulario de reclamación editable en Word (<code>.docx</code>).</p>
+
+        <h4>Lista de Comprobación Interactiva (Proyecto 1):</h4>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj1-step1">
+          <span><strong>Paso 1:</strong> Descargar o localizar un documento normativo en PDF (ej. Código de Consumo del BOE) y adjuntarlo en Google Gemini con el botón <code>+</code>.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj1-step2">
+          <span><strong>Paso 2:</strong> Ejecutar el Prompt #10 solicitando simultáneamente la guía PDF de 14 páginas ("Tus derechos como consumidor") con árboles de decisión y el archivo Word editable.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj1-step3">
+          <span><strong>Paso 3:</strong> Comprobar que Gemini genera dos widgets independientes en la misma respuesta (uno para el PDF y otro para el <code>.docx</code>).</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj1-step4">
+          <span><strong>Paso 4:</strong> Descargar la plantilla <code>.docx</code> y rellenar un caso simulado verificando que contenga los campos vacíos: datos del reclamante, empresa, hechos, motivos y petición.</span>
+        </label>
+
+        <details class="qa-card">
+          <summary>🔍 Ver Solución Explicada y Criterio de Éxito del Proyecto 1</summary>
+          <div class="qa-body">
+            <p><strong>Solución explicada:</strong> El éxito de este proyecto radica en no pedir un simple resumen textual en el chat, sino exigir explícitamente <em>"árboles de decisión, tablas de comparación y ejemplos hipotéticos"</em> para el PDF, y especificar que el documento Word sea <em>"editable con todos los campos vacíos necesarios"</em>. Si pidieras solo un PDF para la reclamación, el usuario tendría que imprimirlo o usar programas de edición de PDF para poder escribir sus datos personales.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- PROYECTO 2 -->
+      <div class="card">
+        <span class="badge">Proyecto Integrador 2</span>
+        <h3>5.2 Cuadro de Mando Ejecutivo y Presentación Analítica a partir de Datos Abiertos Urbanos</h3>
+        <p><strong>Objetivo del Proyecto:</strong> Tomar un archivo CSV de datos abiertos municipales (como Accidentes de Tráfico en Madrid 2026 o el dataset de Meteoritos) y producir un libro de Excel (<code>.xlsx</code>) de 5 pestañas con Dashboard y una presentación ejecutiva validada en PowerPoint (<code>.pptx</code>).</p>
+
+        <h4>Lista de Comprobación Interactiva (Proyecto 2):</h4>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj2-step1">
+          <span><strong>Paso 1:</strong> Adjuntar el archivo CSV en bruto en un chat con el modelo Gemini 3.8 Flash activo.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj2-step2">
+          <span><strong>Paso 2:</strong> Ejecutar el Prompt #8 exigiendo las 5 pestañas (Origen, Diccionario, Calidad, Métricas claves y Panel) e incluyendo la cláusula <em>"preservando todos los datos en bruto"</em>.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj2-step3">
+          <span><strong>Paso 3:</strong> Ejecutar el Prompt #7 para pedir primero la estructura de 10 diapositivas antes de compilar la presentación.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="prj2-step4">
+          <span><strong>Paso 4:</strong> Validar la estructura respondiendo <code>"Me parece genial, créala"</code> y exportar los dos entregables finales en formatos <code>.xlsx</code> y <code>.pptx</code>.</span>
+        </label>
+
+        <details class="qa-card">
+          <summary>🔍 Ver Solución Explicada y Comparativa Correcto vs. Incorrecto</summary>
+          <div class="qa-body">
+            <p><strong>❌ Ejemplo Incorrecto de Prompt:</strong> <em>"Hazme un Excel y una presentación con este CSV de tráfico."</em> → <strong>Problema:</strong> Gemini puede resumir solo 20 filas, eliminar los datos originales y generar diapositivas desordenadas sin validación.</p>
+            <p><strong>✅ Ejemplo Correcto de Prompt:</strong> Utilizar primero el Prompt #8 (que obliga a crear las pestañas Origen, Diccionario, Calidad, Métricas claves y Panel conservando el 100% de las filas en bruto) y luego el Prompt #7 (que solicita el esqueleto diapositiva por diapositiva antes de renderizar la presentación).</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(2)">← Anterior: PROCEDIMIENTO</button>
+        <button class="nav-step-btn next-btn" onclick="go(4)">Siguiente: PROMPTS →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 4: PROMPTS (Módulo 8 Completo + Contexto de Empleo)
+         ========================================== -->
+    <section class="tab-section" id="sec-4" data-t="PROMPTS">
+      <div class="card">
+        <span class="badge">Módulo 8 — Compendio Oficial</span>
+        <h2>Compendio Completo de Prompts y Guía de Dónde se Emplean</h2>
+        <p>En esta sección tienes reunidos <strong>todos los prompts del tutorial</strong> organizados por categoría, incluso aquellos que ya aparecieron en los casos prácticos, acompañados de una descripción exacta de <strong>dónde y para qué se emplea cada uno</strong>. Pulsa <strong>COPIAR PROMPT</strong> para llevar cualquiera de ellos directamente a tu portapapeles.</p>
+      </div>
+
+      <!-- CATEGORÍA 1 -->
+      <div class="card">
+        <span class="badge">Categoría 1</span>
+        <h3>Creación y Maquetación de Documentos PDF</h3>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #1 — Conversión Rápida a PDF Maquetado</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p1">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p1">Pasa los puntos claves a un PDF bien maquetado.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 1 (Módulo 2.1)</strong> inmediatamente después de que Gemini ha generado una presentación de diapositivas en el chat, para transformar en menos de 10 segundos las ideas principales en un informe PDF descargable.</div>
+        </div>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #2 — Transformación de PDF Extenso (+50 págs) en Informe Atlas PDF</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p2">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p2">Analice todo este PDF transformándolo en un informe Atlas PDF con un máximo de 10 páginas. Este queremos que esté dirigido al público general y que trate puntos como la esperanza de vida saludable, la mortalidad prematura, vacunación y desigualdades globales. Además, quiero cuatro gráficos, dos páginas de comparaciones internacionales, fichas metodológicas y un glosario.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 2 (Módulo 2.2)</strong> tras adjuntar el archivo <em>PDF de Estadísticas Mundiales de la Salud 2026 (+50 páginas)</em> para acotar la salida a un máximo de 10 páginas divulgativas con gráficos, comparativas, fichas metodológicas y glosario.</div>
+        </div>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #3 — Generación de PDF Adaptativo según Diagnósticos Previos</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p3">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p3">Con los resultados de todos los diagnósticos que nos ha hecho previamente, nos genere un PDF con las 10 páginas más importantes que realmente se adecuen para nosotros.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 7 (Módulo 2.7)</strong> dentro de <strong>Gemini Notebook ("estudia y aprende")</strong> después de haber respondido varios cuestionarios diagnósticos, logrando un manual PDF de 10 páginas centrado exactamente en los errores cometidos por el estudiante.</div>
+        </div>
+      </div>
+
+      <!-- CATEGORÍA 2 -->
+      <div class="card">
+        <span class="badge">Categoría 2</span>
+        <h3>Edición, Sustitución e Iteración Selectiva de Elementos</h3>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #4 — Sustitución de Tabla por Gráfico con Advertencia Visual</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p4">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p4">En esta página de comparación voy a querer que sustituya toda esta tabla por un gráfico que muestre el valor y el año disponible para cada territorio junto a alguna información más como por ejemplo que me añada una advertencia visual.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 2 (Módulo 2.2)</strong> durante la revisión del Informe Atlas PDF (específicamente sobre la página 6 de comparaciones internacionales) para reemplazar una tabla densa por un gráfico visual sin regenerar ni alterar las otras 9 páginas del documento.</div>
+        </div>
+      </div>
+
+      <!-- CATEGORÍA 3 -->
+      <div class="card">
+        <span class="badge">Categoría 3</span>
+        <h3>Generación y Estructuración de Presentaciones</h3>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #5 — Creación de Presentación Investigada desde Cero</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p5">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p5">Crea una presentación sobre agentes de inteligencia artificial.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza al inicio del <strong>Caso de Uso 1 (Módulo 2.1)</strong> en el cuadro de entrada principal de Gemini cuando no se adjunta ningún archivo externo y se desea que la IA investigue y diseñe las diapositivas e infografías automáticamente.</div>
+        </div>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #6 — Presentación Directa de 12 Diapositivas desde Dataset CSV</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p6">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p6">Analice todo ese dataset que le acabo de introducir para que me cree una presentación de 12 diapositivas que sea muy simple para poder visualizarla rápidamente.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 5 (Módulo 2.5 - Opción Directa)</strong> tras adjuntar el <em>Dataset CSV sobre Meteoritos</em> para obtener una presentación ejecutiva rápida de 12 diapositivas.</div>
+        </div>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #7 — Protocolo de Validación Estructural Previa (10 Diapositivas)</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p7">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p7">Me gustaría crear otra presentación, en este caso unas 10 diapositivas, pero antes de generar la presentación me gustaría que me dijeses una estructura con la información que va a aparecer en cada una de estas con el objetivo de validarlo antes de crearlo.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 5 (Módulo 2.5 - Opción con Validación Previa)</strong> y en el <strong>Proyecto Integrador 2 (Módulo 5.2)</strong> para obligar a Gemini a mostrar primero el guion numerado de cada diapositiva antes de construir el archivo final exportable a Google Slides, PDF o PowerPoint (<code>.pptx</code>).</div>
+        </div>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt Auxiliar de Confirmación — Aprobación de Estructura</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p7b">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p7b">Me parece genial, créala.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 5 (Módulo 2.5, paso 5)</strong> justo después de revisar y aprobar el esquema de 10 diapositivas propuesto por Gemini para lanzar la compilación visual de la presentación.</div>
+        </div>
+      </div>
+
+      <!-- CATEGORÍA 4 -->
+      <div class="card">
+        <span class="badge">Categoría 4</span>
+        <h3>Procesamiento de Hojas de Cálculo (Excel .xlsx)</h3>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #8 — Libro de Excel Multipestaña con Dashboard desde CSV</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p8">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p8">Analice por mí el dataset y que con todo eso me cree un Excel con diferentes pestañas que yo necesito como podría ser el origen, el diccionario, la calidad, métricas claves y un panel, preservando todos los datos en bruto y añadiendo algunas gráficas más visuales por mes, días y franjas horarias y algunas otras categorías.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 4 (Módulo 2.4)</strong> y en el <strong>Proyecto Integrador 2 (Módulo 5.2)</strong> tras adjuntar el <em>CSV de Accidentes de Tráfico en Madrid 2026</em> para construir un archivo <code>.xlsx</code> con 5 hojas operativas sin perder registros originales.</div>
+        </div>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #9 — Hoja de Cálculo Interactiva de Vocabulario desde PDF</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p9">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p9">A partir de este PDF me cree ese Excel con algunos datos principales y expresiones para poder visualizar todo esto de un vistazo y aprenda de una forma más rápida y sencilla.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 7 (Módulo 2.7)</strong> dentro del chat de <strong>Gemini Notebook</strong> para extraer del PDF adaptativo de 10 páginas una tabla Excel interactiva de vocabulario y expresiones clave en inglés.</div>
+        </div>
+      </div>
+
+      <!-- CATEGORÍA 5 -->
+      <div class="card">
+        <span class="badge">Categoría 5</span>
+        <h3>Procesamiento Multifuente y Multiformato Simultáneo</h3>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #10 — Ingesta del BOE (+2.800 págs) a Guía PDF + Plantilla Word Editable</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p10">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p10">Analice el código de consumo del BOE creando una guía PDF visual de unas 14 páginas tituladas como 'Tus derechos como consumidor'... árboles de decisión, diferentes tablas de comparación, ejemplos hipotéticos... y además genere un Word editable para poder presentar una reclamación con todos los campos vacíos necesarios que debería de rellenar.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 3 (Módulo 2.3)</strong> y en el <strong>Proyecto Integrador 1 (Módulo 5.1)</strong> tras adjuntar el <em>PDF del Código de Consumo del BOE (+2.800 páginas)</em> para obtener simultáneamente la guía visual de 14 páginas en PDF y el formulario de reclamación en formato <code>.docx</code>.</div>
+        </div>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #11 — Análisis Multifuente Combinado (CSV CO2 + PDF Cambio Climático)</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p11">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p11">Analice todo este informe y nos saque los datos clave, nos genere una presentación, un PDF y que nos construya también una historia, y además de todo esto le vamos a pedir también que nos añada diferentes gráficos.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza en el <strong>Caso de Uso 6 (Módulo 2.6)</strong> al subir simultáneamente el <em>CSV de Emisiones de CO2</em> y el <em>PDF del Informe de Cambio Climático</em>, sirviendo además para demostrar la superior estabilidad de compilación del modelo Gemini 3.8 Flash frente a Gemini 4 Argon.</div>
+        </div>
+      </div>
+
+      <!-- CATEGORÍA 6 -->
+      <div class="card">
+        <span class="badge">Categoría 6</span>
+        <h3>Configuración de Cuadernos Virtuales de Aprendizaje (Gemini Notebook)</h3>
+
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">Prompt #12 — Diseño de Itinerario en 4 Áreas dentro de Gemini Notebook</span>
+            <button class="copy-btn" type="button" data-copy-target="comp-p12">📋 COPIAR PROMPT</button>
+          </div>
+          <div class="prompt-text" id="comp-p12">El objetivo sería hablar inglés con fluidez en situaciones reales ya sean viajes, reuniones, entrevistas y demás y que nos organice sus fuentes en cuatro áreas tanto gramática, vocabulario, listening y speaking.</div>
+          <div class="step-meta"><strong>📍 Dónde se emplea:</strong> Se utiliza al comienzo del <strong>Caso de Uso 7 (Módulo 2.7)</strong> al crear un nuevo cuaderno en la sección <strong>"estudia y aprende" de Gemini Notebook</strong> para estructurar las lecciones y pruebas diagnósticas en 4 pilares lingüísticos.</div>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(3)">← Anterior: PRÁCTICA</button>
+        <button class="nav-step-btn next-btn" onclick="go(5)">Siguiente: 33 Preguntas (Q&amp;A) →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 5: 33 Preguntas (Q&A) (Antes que ERRORES)
+         ========================================== -->
+    <section class="tab-section" id="sec-5" data-t="33 Preguntas (Q&A)">
+      <div class="card">
+        <span class="badge">Módulo 7 Completo</span>
+        <h2>Banco de 33 Preguntas y Respuestas por Nivel de Dificultad</h2>
+        <p>Domina todos los detalles técnicos y metodológicos del tutorial con las <strong>33 preguntas y respuestas oficiales</strong> ordenadas progresivamente en tres niveles de dificultad: <strong>Nivel 1 (Básico: 1 a 11)</strong>, <strong>Nivel 2 (Avanzado: 12 a 22)</strong> y <strong>Nivel 3 (PRO: 23 a 33)</strong>.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+          <button class="chip" type="button" id="expand-all-qa">➕ Desplegar las 33 respuestas</button>
+          <button class="chip" type="button" id="collapse-all-qa">➖ Plegar todas las respuestas</button>
+        </div>
+      </div>
+
+      <!-- NIVEL 1: BÁSICO (1 a 11) -->
+      <div class="card">
+        <span class="badge lvl-1">Nivel 1 — Básico (Preguntas 1 a 11)</span>
+        <h3>Fundamentos, Interfaz Gratuita y Formatos de Exportación</h3>
+
+        <details class="qa-card" open>
+          <summary><span>1. ¿Qué es la revolución documental de Google Gemini?</span></summary>
+          <div class="qa-body">Es la nueva capacidad de Gemini para generar, previsualizar, editar e iterar documentos completos (PDF, Excel, Presentaciones, Word) directamente desde la interfaz de chat.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>2. ¿Necesito pagar una suscripción para usar estas funciones?</span></summary>
+          <div class="qa-body">No. Todo el tutorial y los casos de uso se pueden realizar íntegramente desde una cuenta gratuita de Google.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>3. ¿Qué tipos de archivos se pueden adjuntar como fuente?</span></summary>
+          <div class="qa-body">Se pueden adjuntar archivos PDF, conjuntos de datos en formato CSV y documentos de texto heterogéneos.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>4. ¿En qué formatos se pueden descargar las presentaciones generadas?</span></summary>
+          <div class="qa-body">Se pueden exportar a Google Slides, formato PDF y formato editable Microsoft PowerPoint (<code>.pptx</code>).</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>5. ¿Qué ocurre cuando le pides a Gemini un PDF a partir de una presentación previa?</span></summary>
+          <div class="qa-body">Gemini sintetiza los puntos clave de las diapositivas y genera un PDF maquetado en menos de 10 segundos.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>6. ¿Dónde se previsualizan los documentos creados?</span></summary>
+          <div class="qa-body">En un visor/widget interactivo integrado dentro de la propia pantalla de chat de Gemini.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>7. ¿Es posible cambiar un título directamente en el visor de Gemini?</span></summary>
+          <div class="qa-body">Sí, se puede hacer clic sobre el texto o título dentro del visor y editarlo manualmente antes de descargar.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>8. ¿Qué es un archivo CSV?</span></summary>
+          <div class="qa-body">Es un formato de archivo plano con datos estructurados en filas y columnas, ideal para ser procesado por Gemini.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>9. ¿Qué permite la función de exportar a Google Drive?</span></summary>
+          <div class="qa-body">Permite guardar el documento generado directamente en tu nube de Google sin necesidad de descargarlo localmente.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>10. ¿Cómo se inicia un nuevo cuaderno de estudio en Gemini?</span></summary>
+          <div class="qa-body">Entrando en Gemini Notebook, seleccionando "estudia y aprende" y asignando un nombre y objetivo formativo.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>11. ¿Qué es la edición puntual o iteración?</span></summary>
+          <div class="qa-body">La capacidad de modificar únicamente una tabla, gráfico o párrafo de una página específica sin alterar el resto del documento.</div>
+        </details>
+      </div>
+
+      <!-- NIVEL 2: AVANZADO (12 a 22) -->
+      <div class="card">
+        <span class="badge lvl-2">Nivel 2 — Avanzado (Preguntas 12 a 22)</span>
+        <h3>Iteración Selectiva, Excel Multipestaña, BOE y Modelos IA</h3>
+
+        <details class="qa-card">
+          <summary><span>12. ¿Cómo se sustituye una tabla por un gráfico en una página específica de un PDF?</span></summary>
+          <div class="qa-body">Indicando en el prompt el número de página exacto y la modificación requerida (ej. <em>"En la página 6 sustituye esta tabla por un gráfico..."</em>).</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>13. ¿Qué pestañas operativas crea Gemini al generar un Excel desde un CSV de tráfico?</span></summary>
+          <div class="qa-body">Crea pestañas de Origen (datos en bruto), Diccionario, Calidad, Métricas clave y Panel/Dashboard gráfico.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>14. ¿Cómo se solicita la creación simultánea de un PDF y un archivo Word (.docx)?</span></summary>
+          <div class="qa-body">En un mismo prompt, especificando las características de la guía PDF visual y solicitando además la plantilla Word editable con campos en blanco.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>15. ¿Qué ventajas ofrece validar la estructura de una presentación antes de compilarla?</span></summary>
+          <div class="qa-body">Permite revisar el esquema borrador diapositiva por diapositiva para ajustar el contenido antes de generar el diseño final.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>16. ¿Cómo calcula Gemini el promedio de implicados en accidentes al generar un Excel?</span></summary>
+          <div class="qa-body">Analiza las miles de filas del CSV adjunto y aplica fórmulas cuantitativas automáticas en la pestaña de métricas clave.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>17. ¿Cómo se procesa un archivo normativo de más de 2.800 páginas como el BOE?</span></summary>
+          <div class="qa-body">Adjuntando el PDF completo y pidiendo a Gemini que extraiga árboles de decisión, comparativas y resúmenes divulgativos de 14 páginas.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>18. ¿Qué función cumple la pestaña "Origen" en los libros de Excel generados por Gemini?</span></summary>
+          <div class="qa-body">Preserva intactos todos los registros en bruto originales del archivo CSV procesado.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>19. ¿De qué manera crea Gemini un PDF de repaso personalizado en Gemini Notebook?</span></summary>
+          <div class="qa-body">Utilizando el historial de respuestas de los cuestionarios diagnósticos previos para seleccionar las 10 páginas más relevantes según tus fallos.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>20. ¿Qué diferencia existe entre Gemini 3.8 Flash y Gemini 4 Argon al generar informes analíticos multifuente?</span></summary>
+          <div class="qa-body">Flash completa la compilación de forma ágil y estable, mientras que Argon puede quedar atrapado en bucles de regeneración en tareas densas.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>21. ¿Cómo ayuda HubSpot Smart CRM con AI Notetaker en el flujo documental?</span></summary>
+          <div class="qa-body">Graba y transcribe reuniones en Meet/Zoom/Teams, generando resúmenes y redactando correos de seguimiento automático.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>22. ¿Cómo se crea una hoja de cálculo para autoevaluación de vocabulario a partir de un PDF?</span></summary>
+          <div class="qa-body">Solicitando a la IA que extraiga del PDF una lista de términos y expresiones clave organizadas en formato de tabla interactiva.</div>
+        </details>
+      </div>
+
+      <!-- NIVEL 3: PRO (23 a 33) -->
+      <div class="card">
+        <span class="badge lvl-3">Nivel 3 — PRO (Preguntas 23 a 33)</span>
+        <h3>Arquitectura de Datos, Prevención de Alucinaciones y ROI Estratégico</h3>
+
+        <details class="qa-card">
+          <summary><span>23. ¿Por qué puede fallar el modelo Gemini 4 Argon en tareas multifuente complejas?</span></summary>
+          <div class="qa-body">Debido a la alta exigencia sintética al cruzar datasets en bruto con PDFs extensos, lo que provoca saturación en el proceso de maquetación final.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>24. ¿Cómo se estructuran los prompts para evitar alucinaciones de datos al sintetizar PDFs extensos?</span></summary>
+          <div class="qa-body">Limitando la búsqueda al documento adjunto, definiendo temas cerrados y requiriendo fichas metodológicas y fuentes explícitas.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>25. ¿Qué protocolo de prompting garantiza un reporte tipo Atlas de exactamente 10 páginas?</span></summary>
+          <div class="qa-body">Definir en la instrucción el número máximo de páginas, la audiencia objetivo y el desglose de secciones y gráficos exactos.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>26. ¿Cómo se gestionan las modificaciones de tablas con advertencias visuales en documentos compilados?</span></summary>
+          <div class="qa-body">Instruyendo a Gemini a reestructurar la vista gráfica agregando iconos o bloques de alerta sin modificar el cuerpo general del documento.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>27. ¿Qué arquitectura de datos aplica Gemini al cruzar un CSV de CO2 con un PDF de Cambio Climático?</span></summary>
+          <div class="qa-body">Extrae variables cuantitativas del CSV y las integra con la narrativa cualitativa del PDF para generar informes unificados.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>28. ¿Cómo se diseña un itinerario de aprendizaje de idiomas autodidacta dentro de Gemini Notebook?</span></summary>
+          <div class="qa-body">Configurando un cuaderno interactivo dividido en 4 áreas temáticas (gramática, vocabulario, listening, speaking) con metas prácticas de vida real.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>29. ¿De qué forma se garantiza la editabilidad de un formulario de reclamación generado por Gemini?</span></summary>
+          <div class="qa-body">Solicitando explícitamente la exportación en formato Word <code>.docx</code> con campos de texto vacíos en lugar de un archivo plano cerrado.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>30. ¿Cuál es la mejor práctica al trabajar con datasets masivos de más de 14.000 filas?</span></summary>
+          <div class="qa-body">Instruir a la IA a generar pestañas separadas de Diccionario y Calidad antes de proceder a la creación del Dashboard de gráficos.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>31. ¿Se puede revertir una edición manual realizada dentro del visor de documentos de Gemini?</span></summary>
+          <div class="qa-body">Sí, editando nuevamente el texto dentro del visor o solicitando al chat la regeneración de la versión previa.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>32. ¿Cómo se automatiza la creación de resúmenes de reuniones comerciales tras finalizar una sesión de trabajo en Gemini?</span></summary>
+          <div class="qa-body">Vinculando HubSpot Smart CRM para que capture la videollamada y sincronice los acuerdos y notas de seguimiento directamente.</div>
+        </details>
+
+        <details class="qa-card">
+          <summary><span>33. ¿De qué manera la combinación de Gemini Flash y Gemini Notebook maximiza el ROI del tiempo de trabajo?</span></summary>
+          <div class="qa-body">Delegando el procesamiento pesado de miles de páginas y datos en bruto a la IA, permitiendo al usuario enfocarse únicamente en las decisiones estratégicas.</div>
+        </details>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(4)">← Anterior: PROMPTS</button>
+        <button class="nav-step-btn next-btn" onclick="go(6)">Siguiente: ERRORES →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 6: ERRORES (Módulo 4 Completo)
+         ========================================== -->
+    <section class="tab-section" id="sec-6" data-t="ERRORES">
+      <div class="card">
+        <span class="badge">Módulo 4 Completo</span>
+        <h2>Buenas Prácticas, Limitaciones y Solución de Errores</h2>
+        <p>Conoce cómo prevenir los fallos más habituales al generar documentos complejos y consulta la matriz oficial de compatibilidad de formatos.</p>
+      </div>
+
+      <div class="card">
+        <h3>4.1 Los 4 Principios de Oro para Redactar Prompts Documentales</h3>
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span><strong>Especificidad de Extensión:</strong> Indica siempre el número exacto o máximo de páginas o diapositivas (ej. <em>"informe Atlas PDF con un máximo de 10 páginas"</em> o <em>"guía PDF visual de unas 14 páginas"</em>).
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span><strong>Definición de Público Objetivo:</strong> Clarifica siempre para quién se redacta el documento (ej. <em>"dirigido al público general"</em> o <em>"para perfil ejecutivo"</em>) para que Gemini calibre el vocabulario.
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span><strong>Estructura Desglosada de Componentes:</strong> Enumera exactamente cuántos gráficos, tablas comparativas, árboles de decisión, fichas metodológicas o glosarios debe contener el archivo.
+          </li>
+          <li class="step-item">
+            <span class="step-num">4</span><strong>Fase de Validación Previa:</strong> En presentaciones analíticas, pide siempre la estructura borrador diapositiva por diapositiva antes de ordenar la compilación visual.
+          </li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>4.2 Diagnóstico y Resolución de Errores Frecuentes</h3>
+
+        <div class="pedagogy-box" style="border-left-color: var(--danger); margin-bottom:12px;">
+          <h4>🚨 Error 1: Bloqueo o bucle de regeneración en Gemini 4 Argon durante tareas multifuente</h4>
+          <p><strong>Síntoma:</strong> Al subir simultáneamente un CSV y un PDF extenso y pedir presentación + PDF + historia + gráficos, el modelo Gemini 4 Argon intenta compilar varias veces y finalmente interrumpe la entrega del documento.</p>
+          <p><strong>Solución verificada:</strong> Cambia el selector de modelo a <strong>Gemini 3.8 Flash</strong> (incluido en la cuenta gratuita) o divide la petición en pasos secuenciales. Flash completa la compilación multifuente sin bloqueos.</p>
+        </div>
+
+        <div class="pedagogy-box" style="border-left-color: var(--warning); margin-bottom:12px;">
+          <h4>⚠️ Error 2: Pérdida o recorte de filas originales al transformar un CSV a Excel (.xlsx)</h4>
+          <p><strong>Síntoma:</strong> La hoja de cálculo generada muestra únicamente una muestra resumida de los registros y omite miles de filas del dataset original.</p>
+          <p><strong>Solución verificada:</strong> Incluye siempre en tu prompt la instrucción explícita: <code>"preservando todos los datos en bruto"</code> y solicita una pestaña dedicada llamada <strong>"Origen"</strong> junto con las pestañas de <strong>"Diccionario"</strong> y <strong>"Calidad"</strong>.</p>
+        </div>
+
+        <div class="pedagogy-box" style="border-left-color: var(--accent); margin-bottom:12px;">
+          <h4>🛠️ Error 3: Regeneración completa no deseada al querer cambiar solo una tabla</h4>
+          <p><strong>Síntoma:</strong> Quieres cambiar una tabla por un gráfico en la página 6, pero al pedirlo de forma genérica la IA altera el diseño de las 10 páginas del PDF.</p>
+          <p><strong>Solución verificada:</strong> Selecciona o cita explícitamente la página afectada en el prompt (ej. <em>"En esta página de comparación voy a querer que sustituya toda esta tabla por un gráfico..."</em>) o haz clic directamente sobre los textos en el visor integrado para editar palabras sueltas.</p>
+        </div>
+
+        <div class="pedagogy-box" style="border-left-color: var(--success);">
+          <h4>📄 Error 4: Formulario de reclamación no rellenable por estar cerrado en PDF</h4>
+          <p><strong>Síntoma:</strong> El usuario necesita completar sus datos personales para presentar una reclamación oficial pero recibe un PDF estático.</p>
+          <p><strong>Solución verificada:</strong> Solicita en el prompt que, además de la guía PDF, Gemini <em>"genere un Word editable (.docx) para poder presentar una reclamación con todos los campos vacíos necesarios que debería de rellenar"</em>.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>4.3 Tabla Oficial de Compatibilidad y Exportación de Formatos</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Formato Generado en Gemini</th>
+                <th>Formatos de Exportación Compatibles</th>
+                <th>Usos Recomendados en el Tutorial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Documento PDF</strong></td>
+                <td><code>.pdf</code>, Guardar directo en Google Drive</td>
+                <td>Informes ejecutivos, Atlas PDF de 10 págs, guías legales del BOE (14 págs), manuales adaptativos.</td>
+              </tr>
+              <tr>
+                <td><strong>Presentación</strong></td>
+                <td>Google Slides, <code>.pdf</code>, <code>.pptx</code> (Microsoft PowerPoint)</td>
+                <td>Ponencias de agentes IA, resúmenes visuales de datasets (10-12 diapositivas), reuniones.</td>
+              </tr>
+              <tr>
+                <td><strong>Hoja de Cálculo</strong></td>
+                <td><code>.xlsx</code> (Microsoft Excel), Google Sheets</td>
+                <td>Dashboards gráficos, diccionarios de datos, auditoría de calidad, métricas clave y tablas de vocabulario.</td>
+              </tr>
+              <tr>
+                <td><strong>Documento de Texto</strong></td>
+                <td><code>.docx</code> (Microsoft Word editable)</td>
+                <td>Plantillas formales y formularios de reclamación de consumo con campos vacíos listos para rellenar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(5)">← Anterior: 33 Preguntas (Q&amp;A)</button>
+        <button class="nav-step-btn next-btn" onclick="go(7)">Siguiente: RESUMEN →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 7: RESUMEN (Síntesis + Glosario Módulo 6)
+         ========================================== -->
+    <section class="tab-section" id="sec-7" data-t="RESUMEN">
+      <div class="card">
+        <span class="badge">Síntesis por Capítulo y Módulo 6</span>
+        <h2>Resumen Ejecutivo del Manual y Glosario Técnico</h2>
+        <p>Repasa de un vistazo los puntos esenciales de cada módulo y consulta el glosario de los 10 términos técnicos fundamentales.</p>
+
+        <h3>Síntesis Rápida por Capítulos</h3>
+        <ul>
+          <li><strong>Capítulo 0 y 1 (Entorno y Modelos):</strong> Todo el flujo documental es gratuito con una cuenta de Google usando <strong>Gemini 3.8 Flash</strong>, que supera en estabilidad multifuente a <strong>Gemini 4 Argon</strong>.</li>
+          <li><strong>Capítulo 2 (Los 7 Casos Prácticos):</strong>
+            <ul>
+              <li><em>Caso 1:</em> Presentación temática convertida a PDF maquetado en menos de 10 segundos.</li>
+              <li><em>Caso 2:</em> PDF de Salud (+50 págs) convertido en Atlas PDF (10 págs) con sustitución puntual de tabla por gráfico en la página 6 y edición directa de texto.</li>
+              <li><em>Caso 3:</em> Código de Consumo del BOE (+2.800 págs) transformado simultáneamente en guía PDF (14 págs) + formulario Word (<code>.docx</code>) editable.</li>
+              <li><em>Caso 4:</em> CSV de Accidentes en Madrid convertido en libro Excel (<code>.xlsx</code>) con 5 pestañas (Origen, Diccionario, Calidad, Métricas claves y Panel/Dashboard).</li>
+              <li><em>Caso 5:</em> CSV de Meteoritos transformado en presentación de 10 o 12 diapositivas con validación previa del esquema.</li>
+              <li><em>Caso 6:</em> Cruce multifuente (CSV de CO2 + PDF de Cambio Climático) demostrando la fiabilidad de Flash.</li>
+              <li><em>Caso 7:</em> Cuaderno en <strong>Gemini Notebook</strong> ("estudia y aprende") para inglés dividido en 4 áreas, generando PDF adaptativo (10 págs) según fallos en diagnósticos y Excel de vocabulario.</li>
+            </ul>
+          </li>
+          <li><strong>Capítulo 3 (Productividad Externa):</strong> Integración de <strong>HubSpot Smart CRM</strong> y <strong>AI Notetaker</strong> para transcribir reuniones en Meet, Zoom y Teams y redactar correos de seguimiento.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <span class="badge">Módulo 6 Completo</span>
+        <h3>Glosario de los 10 Términos Técnicos y Conceptuales</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Término Técnico</th>
+                <th>Definición Exacta en el Contexto del Tutorial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>AI Notetaker</strong></td>
+                <td>Asistente inteligente capaz de unirse a reuniones virtuales (Meet, Zoom, Teams), transcribir audio y sintetizar acuerdos.</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>Atlas PDF</strong></td>
+                <td>Estilo de informe sintético altamente visual que combina texto explicativo con mapas, gráficos y comparativas internacionales.</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>CSV (Comma-Separated Values)</strong></td>
+                <td>Formato de archivo de texto plano que almacena datos en forma de tablas separadas por comas.</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><strong>Dashboard / Cuadro de Mando</strong></td>
+                <td>Panel gráfico integrado en una hoja de cálculo que resume los indicadores clave mediante visualizaciones métricas.</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><strong>Dataset</strong></td>
+                <td>Conjunto estructurado de datos agrupados en filas y columnas para su análisis cuantitativo.</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><strong>Gemini Notebook</strong></td>
+                <td>Entorno de cuadernos virtuales en Gemini orientado al aprendizaje personalizado e interactivo ("estudia y aprende").</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><strong>Iteración Documental</strong></td>
+                <td>Proceso de modificación y perfeccionamiento continuo de partes específicas de un documento mediante instrucciones consecutivas.</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><strong>Prompt</strong></td>
+                <td>Instrucción o mandato en lenguaje natural transmitido a un modelo de inteligencia artificial.</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><strong>Visor / Widget de Documentos</strong></td>
+                <td>Componente de interfaz que permite visualizar, editar manualmente y exportar documentos sin salir del chat de Gemini.</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><strong>XLSX</strong></td>
+                <td>Formato de archivo nativo de Microsoft Excel utilizado para hojas de cálculo avanzadas multipestaña.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(6)">← Anterior: ERRORES</button>
+        <button class="nav-step-btn next-btn" onclick="go(8)">Siguiente: FUENTES →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 8: FUENTES (Módulos 9 y 10 + Botones URL Nueva Ventana)
+         ========================================== -->
+    <section class="tab-section" id="sec-8" data-t="FUENTES">
+      <div class="card">
+        <span class="badge">Módulos 9 y 10 Completos</span>
+        <h2>Registro de Fuentes, Datasets y Documentación Oficial</h2>
+        <p>Todos los enlaces externos de este tutorial cuentan con su dirección URL copiable y un botón dedicado <strong>"Abrir enlace en nueva ventana"</strong> que abre el recurso de forma segura en una pestaña nueva del navegador.</p>
+      </div>
+
+      <div class="card">
+        <h3>9.1 Fuente Audiovisual Principal y Canal Emisor</h3>
+        <ul>
+          <li><strong>Título del Material de Referencia:</strong> <em>¡Google Gemini DESTROZA a Office! Ahora Crea y Edita TODO GRATIS</em></li>
+          <li><strong>Canal Emisor:</strong> Alejavi Rivera (YouTube) — Documentación estructurada en el manual por Rubén Sbarsky / Alejavi Rivera.</li>
+        </ul>
+
+        <div class="url-box">
+          <strong>Canal Oficial de YouTube — Alejavi Rivera (Fuente Audiovisual):</strong>
+          <div class="url-code" id="url-yt">https://www.youtube.com/@alejavirivera</div>
+          <div class="url-actions">
+            <a class="open-url-btn" href="https://www.youtube.com/@alejavirivera" target="_blank" rel="noopener noreferrer">🔗 Abrir enlace en nueva ventana</a>
+            <button class="copy-btn" type="button" data-copy-target="url-yt">📋 COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>9.2 Los 6 Archivos y Datasets Utilizados en los Ejercicios Prácticos</h3>
+        <ol>
+          <li><strong>PDF de Estadísticas Mundiales de la Salud (2026):</strong> Documento técnico global de más de 50 páginas utilizado en el Caso 2 para crear el Informe Atlas PDF de 10 páginas.</li>
+          <li><strong>PDF del Código de Consumo (BOE):</strong> Documento legal del Boletín Oficial del Estado de más de 2.800 páginas utilizado en el Caso 3 para generar la guía PDF de 14 páginas y el Word editable.</li>
+          <li><strong>CSV de Accidentes de Tráfico en Madrid (2026):</strong> Dataset de datos abiertos de tráfico urbano con miles de registros en bruto utilizado en el Caso 4 para el libro Excel de 5 pestañas.</li>
+          <li><strong>Dataset sobre Meteoritos (CSV):</strong> Archivo estructurado con registros de nombres, clases, identificación y masa de meteoritos utilizado en el Caso 5 para presentaciones de 12 y 10 diapositivas.</li>
+          <li><strong>CSV de Emisiones de CO2:</strong> Conjunto de datos cuantitativos de emisiones de CO2 clasificadas por países utilizado en el análisis multifuente del Caso 6.</li>
+          <li><strong>Informe de Cambio Climático (PDF):</strong> Documento técnico cualitativo sobre evolución climática global cruzado con el CSV de CO2 en el Caso 6.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>9.3 y 10. Plataformas Referenciadas y Fuentes Oficiales Recomendadas</h3>
+
+        <div class="url-box">
+          <strong>1. Plataforma Google Gemini (Acceso Gratuito a Gemini 3.8 Flash y Gemini Notebook):</strong>
+          <div class="url-code" id="url-gemini">https://gemini.google.com/</div>
+          <div class="url-actions">
+            <a class="open-url-btn" href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">🔗 Abrir enlace en nueva ventana</a>
+            <button class="copy-btn" type="button" data-copy-target="url-gemini">📋 COPIAR URL</button>
+          </div>
+        </div>
+
+        <div class="url-box">
+          <strong>2. Centro de Ayuda Oficial de Google Gemini (Documentación Técnica de Google):</strong>
+          <div class="url-code" id="url-gemini-help">https://support.google.com/gemini</div>
+          <div class="url-actions">
+            <a class="open-url-btn" href="https://support.google.com/gemini" target="_blank" rel="noopener noreferrer">🔗 Abrir enlace en nueva ventana</a>
+            <button class="copy-btn" type="button" data-copy-target="url-gemini-help">📋 COPIAR URL</button>
+          </div>
+        </div>
+
+        <div class="url-box">
+          <strong>3. Google Workspace Learning Center (Guías Oficiales de Docs, Sheets y Slides):</strong>
+          <div class="url-code" id="url-workspace">https://support.google.com/a/users</div>
+          <div class="url-actions">
+            <a class="open-url-btn" href="https://support.google.com/a/users" target="_blank" rel="noopener noreferrer">🔗 Abrir enlace en nueva ventana</a>
+            <button class="copy-btn" type="button" data-copy-target="url-workspace">📋 COPIAR URL</button>
+          </div>
+        </div>
+
+        <div class="url-box">
+          <strong>4. Boletín Oficial del Estado — BOE (Códigos Electrónicos y Código de Consumo):</strong>
+          <div class="url-code" id="url-boe">https://www.boe.es/biblioteca_juridica/index.php?tipo=C</div>
+          <div class="url-actions">
+            <a class="open-url-btn" href="https://www.boe.es/biblioteca_juridica/index.php?tipo=C" target="_blank" rel="noopener noreferrer">🔗 Abrir enlace en nueva ventana</a>
+            <button class="copy-btn" type="button" data-copy-target="url-boe">📋 COPIAR URL</button>
+          </div>
+        </div>
+
+        <div class="url-box">
+          <strong>5. Portal de Datos Abiertos del Ayuntamiento de Madrid (Datasets CSV de Tráfico):</strong>
+          <div class="url-code" id="url-madrid">https://datos.madrid.es/</div>
+          <div class="url-actions">
+            <a class="open-url-btn" href="https://datos.madrid.es/" target="_blank" rel="noopener noreferrer">🔗 Abrir enlace en nueva ventana</a>
+            <button class="copy-btn" type="button" data-copy-target="url-madrid">📋 COPIAR URL</button>
+          </div>
+        </div>
+
+        <div class="url-box">
+          <strong>6. HubSpot Smart CRM y Centro de IA (Integración de AI Notetaker para Reuniones):</strong>
+          <div class="url-code" id="url-hubspot">https://www.hubspot.es/products/crm</div>
+          <div class="url-actions">
+            <a class="open-url-btn" href="https://www.hubspot.es/products/crm" target="_blank" rel="noopener noreferrer">🔗 Abrir enlace en nueva ventana</a>
+            <button class="copy-btn" type="button" data-copy-target="url-hubspot">📋 COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(7)">← Anterior: RESUMEN</button>
+        <button class="nav-step-btn next-btn" onclick="go(9)">Siguiente: CRÉDITOS →</button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 9: CRÉDITOS (Orden estricto V3)
+         ========================================== -->
+    <section class="tab-section" id="sec-9" data-t="CRÉDITOS">
+      <div class="card">
+        <!-- 1. Título de la sección -->
+        <h2>CRÉDITOS</h2>
+
+        <!-- 2. SVG animado compartido con INICIO (en primera pantalla también en móviles) -->
+        <div class="svg-hero-wrapper" id="svg-container-credits" role="region" aria-label="Ilustración animada compartida del ecosistema documental de Google Gemini en la sección de Créditos">
+          <div class="svg-hero-mount" id="svg-mount-credits"></div>
+        </div>
+
+        <!-- 3. Breve descripción de la ilustración -->
+        <p style="text-align:center; font-size:0.9rem; color:var(--text-secondary);">
+          <strong>Descripción de la ilustración:</strong> Escena vectorial multicapa en formato vertical 4:5 que representa el motor central de Google Gemini procesando flujos de datos masivos (CSV y normativas de +2.800 páginas del BOE) y distribuyendo energía hacia los cuatro nodos documentales interactivos: informes Atlas PDF, cuadros de mando en Excel (<code>.xlsx</code>), presentaciones (<code>.pptx</code> / Slides) y plantillas editables en Word (<code>.docx</code>).
+        </p>
+
+        <!-- 4. Nombre del autor (elemento visual más destacado) -->
+        <div class="credits-author-highlight">Rubén Sbarsky</div>
+
+        <!-- 5. Texto «Autor del tutorial» -->
+        <div class="credits-role-label">Autor del tutorial</div>
+
+        <!-- 6. Información adicional pertinente + Fecha y hora fija sincronizada -->
+        <div class="card" style="background: var(--bg-card-alt); margin-top: 14px;">
+          <p><strong>Especialidad:</strong> Documentación Técnica, Ingeniería de Prompts y Diseño Instruccional para Formación Autodidacta (Desde Nivel 0 hasta Profesional PRO).</p>
+          <p><strong>Material de referencia documentado:</strong> <em>Revolución Documental con Google Gemini</em> por Rubén Sbarsky / Alejavi Rivera.</p>
+          <p><strong>Arquitectura Técnica del Entregable:</strong> Aplicación educativa SPA autónoma en un único archivo HTML sin dependencias externas, optimizada para dispositivos móviles (incluyendo pantallas de 360 px como Samsung Galaxy A02s) y equipada con exportación de impresión A4.</p>
+          <p><strong>Fecha y hora de creación (Sincronizada):</strong> <code>05/11/2026 — 19:54:44</code></p>
+          <!-- 7. Número de versión coincidente con el archivo -->
+          <p><strong>Versión del entregable:</strong> <span class="badge">V001</span> (Archivo: <code>tutorial_revolucion_documental_google_gemini_V001.html</code>)</p>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button class="nav-step-btn" onclick="go(8)">← Anterior: FUENTES</button>
+        <button class="nav-step-btn next-btn" onclick="go(0)">↺ Volver a INICIO</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTONES FLOTANTES MÓVILES ARRASTRABLES (INICIO Y ARRIBA) -->
+  <button id="float-home-btn" class="floating-draggable" type="button" title="Arrastrar o pulsar para ir a INICIO" aria-label="Ir a la pestaña de INICIO">
+    🏠 INICIO
+  </button>
+
+  <button id="float-top-btn" class="floating-draggable" type="button" title="Arrastrar o pulsar para subir al comienzo de la pestaña actual" aria-label="Subir al comienzo de la pestaña actual">
+    ⬆ ARRIBA
+  </button>
+
+  <!-- LÓGICA JAVASCRIPT CON ESTÁNDAR CLEAN CODE -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* =========================================================
+         1. GESTIÓN DE LA PLANTILLA ÚNICA DEL SVG ANIMADO
+         ========================================================= */
+      let rawSvgTemplate = '';
+
+      function extractAndRemoveMasterSvg() {
+        const holder = document.getElementById('svg-master-template-holder');
+        if (!holder) return;
+        rawSvgTemplate = holder.innerHTML.trim();
+        holder.remove();
+      }
+
+      function buildUniqueSvgMarkup(instancePrefix) {
+        if (!rawSvgTemplate) return '';
+        return rawSvgTemplate.replace(/__PREFIX__/g, instancePrefix + '_');
+      }
+
+      function buildSvgDataUriFallback(instancePrefix) {
+        const svgMarkup = buildUniqueSvgMarkup(instancePrefix);
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svgMarkup);
+      }
+
+      function mountSvgInstance(mountElementId, instancePrefix) {
+        const mountNode = document.getElementById(mountElementId);
+        if (!mountNode || !rawSvgTemplate) return;
+        try {
+          mountNode.innerHTML = buildUniqueSvgMarkup(instancePrefix);
+          const svgEl = mountNode.querySelector('svg');
+          if (!svgEl) {
+            throw new Error('SVG element not mounted');
+          }
+        } catch (err) {
+          const fallbackImg = document.createElement('img');
+          fallbackImg.src = buildSvgDataUriFallback(instancePrefix);
+          fallbackImg.alt = 'Ilustración animada de la Revolución Documental con Google Gemini';
+          fallbackImg.style.width = '100%';
+          fallbackImg.style.height = '100%';
+          mountNode.innerHTML = '';
+          mountNode.appendChild(fallbackImg);
+        }
+      }
+
+      function ensureVisibleSvgsMounted() {
+        const homeSection = document.getElementById('sec-0');
+        const creditsSection = document.getElementById('sec-9');
+        const homeMount = document.getElementById('svg-mount-home');
+        const creditsMount = document.getElementById('svg-mount-credits');
+
+        if (homeSection && homeSection.classList.contains('active-section') && homeMount && !homeMount.innerHTML.trim()) {
+          mountSvgInstance('svg-mount-home', 'heroHome');
+        }
+        if (creditsSection && creditsSection.classList.contains('active-section') && creditsMount && !creditsMount.innerHTML.trim()) {
+          mountSvgInstance('svg-mount-credits', 'heroCredits');
+        }
+      }
+
+      /* =========================================================
+         2. NAVEGACIÓN SPA DE PESTAÑAS E ÍNDICE LATERAL (#dr)
+         ========================================================= */
+      const secs = Array.from(document.querySelectorAll('.tab-section'));
+      const navChips = Array.from(document.querySelectorAll('#main-nav .chip[data-tab-target]'));
+      const dr = document.querySelector('#dr');
+      const mb = document.querySelector('#mb');
+      let currentTabIndex = 0;
+
+      function tg(forceState) {
+        if (!dr || !mb) return;
+        dr.classList.toggle('o', forceState);
+        mb.setAttribute('aria-expanded', String(dr.classList.contains('o')));
+      }
+
+      function scrollToCurrentTabStart() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (document.documentElement) {
+          document.documentElement.scrollTop = 0;
+        }
+        if (document.body) {
+          document.body.scrollTop = 0;
+        }
+      }
+
+      function go(targetIndex) {
+        const validIndex = Math.max(0, Math.min(secs.length - 1, Number(targetIndex) || 0));
+        currentTabIndex = validIndex;
+
+        secs.forEach((sec, idx) => {
+          sec.classList.toggle('active-section', idx === validIndex);
+        });
+
+        navChips.forEach((chip) => {
+          const chipTarget = Number(chip.getAttribute('data-tab-target'));
+          chip.classList.toggle('active-tab', chipTarget === validIndex);
+          if (chipTarget === validIndex) {
+            chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        });
+
+        if (dr) {
+          const drawerLinks = Array.from(dr.querySelectorAll('a'));
+          drawerLinks.forEach((a, j) => a.classList.toggle('on', j === validIndex));
+        }
+
+        if (validIndex === 0) {
+          mountSvgInstance('svg-mount-home', 'heroHome');
+        } else if (validIndex === 9) {
+          mountSvgInstance('svg-mount-credits', 'heroCredits');
+        }
+
+        scrollToCurrentTabStart();
+        saveProgressState('lastTab', String(validIndex));
+        updateReadingProgress();
+      }
+
+      window.go = go;
+
+      function buildIndexDrawer() {
+        if (!dr) return;
+        secs.forEach((s, i) => {
+          const a = document.createElement('a');
+          const titleText = s.dataset.t || (s.querySelector('h2') ? s.querySelector('h2').textContent : 'Sección');
+          a.textContent = (i ? i + '. ' : '') + titleText;
+          a.href = '#sec-' + i;
+          a.onclick = (ev) => {
+            ev.preventDefault();
+            go(i);
+            tg(false);
+          };
+          dr.appendChild(a);
+        });
+      }
+
+      function bindNavigationEvents() {
+        navChips.forEach((chip) => {
+          chip.addEventListener('click', () => {
+            const idx = Number(chip.getAttribute('data-tab-target'));
+            go(idx);
+            tg(false);
+          });
+        });
+
+        if (mb) {
+          mb.onclick = () => tg();
+        }
+
+        const homeIndexBtn = document.querySelector('#ix');
+        if (homeIndexBtn) {
+          homeIndexBtn.onclick = () => tg(true);
+        }
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            tg(false);
+          }
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('#dr,#mb,#ix')) {
+            tg(false);
+          }
+        });
+      }
+
+      /* =========================================================
+         3. BOTONES FLOTANTES ARRASTRABLES (INICIO Y ARRIBA)
+         ========================================================= */
+      function makeButtonDraggableAndClickable(buttonElement, onClickAction) {
+        if (!buttonElement) return;
+        let isDragging = false;
+        let hasMoved = false;
+        let startX = 0;
+        let startY = 0;
+        let initialLeft = 0;
+        let initialTop = 0;
+
+        function onPointerDown(e) {
+          if (e.button !== undefined && e.button !== 0) return;
+          isDragging = true;
+          hasMoved = false;
+          const rect = buttonElement.getBoundingClientRect();
+          startX = e.clientX;
+          startY = e.clientY;
+          initialLeft = rect.left;
+          initialTop = rect.top;
+          buttonElement.setPointerCapture(e.pointerId);
+        }
+
+        function onPointerMove(e) {
+          if (!isDragging) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+            hasMoved = true;
+          }
+          if (!hasMoved) return;
+
+          const maxLeft = window.innerWidth - buttonElement.offsetWidth - 6;
+          const maxTop = window.innerHeight - buttonElement.offsetHeight - 6;
+          const nextLeft = Math.max(6, Math.min(maxLeft, initialLeft + dx));
+          const nextTop = Math.max(64, Math.min(maxTop, initialTop + dy));
+
+          buttonElement.style.left = nextLeft + 'px';
+          buttonElement.style.top = nextTop + 'px';
+          buttonElement.style.right = 'auto';
+          buttonElement.style.bottom = 'auto';
+        }
+
+        function onPointerUp(e) {
+          if (!isDragging) return;
+          isDragging = false;
+          try {
+            buttonElement.releasePointerCapture(e.pointerId);
+          } catch (_) {}
+          if (!hasMoved) {
+            onClickAction();
+          }
+        }
+
+        buttonElement.addEventListener('pointerdown', onPointerDown);
+        buttonElement.addEventListener('pointermove', onPointerMove);
+        buttonElement.addEventListener('pointerup', onPointerUp);
+        buttonElement.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClickAction();
+          }
+        });
+      }
+
+      /* =========================================================
+         4. PORTAPAPELES Y BOTONES COPIAR
+         ========================================================= */
+      function fallbackCopyText(textToCopy) {
+        const tempArea = document.createElement('textarea');
+        tempArea.value = textToCopy;
+        tempArea.style.position = 'fixed';
+        tempArea.style.left = '-9999px';
+        document.body.appendChild(tempArea);
+        tempArea.select();
+        let success = false;
+        try {
+          success = document.execCommand('copy');
+        } catch (_) {
+          success = false;
+        }
+        tempArea.remove();
+        return success;
+      }
+
+      function bindCopyButtons() {
+        const copyButtons = document.querySelectorAll('.copy-btn[data-copy-target]');
+        copyButtons.forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const targetId = btn.getAttribute('data-copy-target');
+            const targetNode = document.getElementById(targetId);
+            if (!targetNode) return;
+            const exactText = targetNode.textContent;
+            const originalLabel = btn.innerHTML;
+
+            let copiedOk = false;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              try {
+                await navigator.clipboard.writeText(exactText);
+                copiedOk = true;
+              } catch (_) {
+                copiedOk = fallbackCopyText(exactText);
+              }
+            } else {
+              copiedOk = fallbackCopyText(exactText);
+            }
+
+            if (copiedOk) {
+              btn.classList.add('copied-ok');
+              btn.innerHTML = '✓ ¡COPIADO!';
+            } else {
+              btn.innerHTML = 'Selecciona el texto manualmente';
+            }
+
+            setTimeout(() => {
+              btn.classList.remove('copied-ok');
+              btn.innerHTML = originalLabel;
+            }, 2000);
+          });
+        });
+      }
+
+      /* =========================================================
+         5. PERSISTENCIA LOCALSTORAGE (PROGRESO, TEMA, TIPOGRAFÍA)
+         ========================================================= */
+      const STORAGE_PREFIX = 'gemini_doc_rev_v001_';
+
+      function saveProgressState(key, value) {
+        try {
+          localStorage.setItem(STORAGE_PREFIX + key, value);
+        } catch (_) {}
+      }
+
+      function loadProgressState(key, defaultValue) {
+        try {
+          const val = localStorage.getItem(STORAGE_PREFIX + key);
+          return val !== null ? val : defaultValue;
+        } catch (_) {
+          return defaultValue;
+        }
+      }
+
+      function initChecklistsPersistence() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][data-check-id]');
+        checkboxes.forEach((box) => {
+          const checkId = box.getAttribute('data-check-id');
+          const saved = loadProgressState('chk_' + checkId, '0');
+          box.checked = saved === '1';
+          box.addEventListener('change', () => {
+            saveProgressState('chk_' + checkId, box.checked ? '1' : '0');
+          });
+        });
+      }
+
+      function initThemeAndTypographyControls() {
+        let currentScale = parseFloat(loadProgressState('fontScale', '1')) || 1;
+        document.documentElement.style.setProperty('--font-scale', String(currentScale));
+
+        const savedTheme = loadProgressState('theme', 'dark');
+        if (savedTheme === 'light') {
+          document.body.classList.add('light-theme');
+        }
+
+        const decBtn = document.getElementById('font-dec-btn');
+        const incBtn = document.getElementById('font-inc-btn');
+        const themeBtn = document.getElementById('theme-toggle-btn');
+
+        if (decBtn) {
+          decBtn.addEventListener('click', () => {
+            currentScale = Math.max(0.85, +(currentScale - 0.08).toFixed(2));
+            document.documentElement.style.setProperty('--font-scale', String(currentScale));
+            saveProgressState('fontScale', String(currentScale));
+          });
+        }
+
+        if (incBtn) {
+          incBtn.addEventListener('click', () => {
+            currentScale = Math.min(1.3, +(currentScale + 0.08).toFixed(2));
+            document.documentElement.style.setProperty('--font-scale', String(currentScale));
+            saveProgressState('fontScale', String(currentScale));
+          });
+        }
+
+        if (themeBtn) {
+          themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            saveProgressState('theme', isLight ? 'light' : 'dark');
+          });
+        }
+      }
+
+      /* =========================================================
+         6. BUSCADOR INTERNO EN TIEMPO REAL
+         ========================================================= */
+      function initGlobalSearch() {
+        const searchInput = document.getElementById('global-search');
+        const clearBtn = document.getElementById('clear-search-btn');
+        const resultsPanel = document.getElementById('search-results-panel');
+        if (!searchInput || !resultsPanel) return;
+
+        function runSearch() {
+          const query = searchInput.value.trim().toLowerCase();
+          if (clearBtn) {
+            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+          }
+          if (query.length < 2) {
+            resultsPanel.style.display = 'none';
+            resultsPanel.innerHTML = '';
+            return;
+          }
+
+          const matches = [];
+          secs.forEach((sec, idx) => {
+            const tabTitle = sec.dataset.t || 'Sección ' + idx;
+            const paragraphs = sec.querySelectorAll('h2, h3, p, li, summary, .prompt-text, td');
+            for (let i = 0; i < paragraphs.length; i++) {
+              const text = paragraphs[i].textContent.trim();
+              if (text.toLowerCase().includes(query)) {
+                matches.push({
+                  tabIdx: idx,
+                  tabTitle: tabTitle,
+                  snippet: text.length > 140 ? text.slice(0, 140) + '...' : text
+                });
+                if (matches.length >= 12) break;
+              }
+            }
+          });
+
+          resultsPanel.style.display = 'block';
+          if (matches.length === 0) {
+            resultsPanel.innerHTML = '<p style="margin:0;">No se encontraron coincidencias para <strong>' +
+              query.replace(/[<>&"]/g, '') + '</strong>.</p>';
+            return;
+          }
+
+          resultsPanel.innerHTML = '<div style="font-size:0.8rem; color:var(--accent); font-weight:700; margin-bottom:6px;">Resultados encontrados (' + matches.length + '):</div>';
+          matches.forEach((hit) => {
+            const itemBtn = document.createElement('button');
+            itemBtn.className = 'search-hit-item';
+            itemBtn.innerHTML = '<strong>[' + hit.tabTitle + ']</strong> — ' + hit.snippet.replace(/[<>&]/g, '');
+            itemBtn.addEventListener('click', () => {
+              resultsPanel.style.display = 'none';
+              go(hit.tabIdx);
+            });
+            resultsPanel.appendChild(itemBtn);
+          });
+        }
+
+        searchInput.addEventListener('input', runSearch);
+        if (clearBtn) {
+          clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            runSearch();
+            searchInput.focus();
+          });
+        }
+      }
+
+      /* =========================================================
+         7. IMPRESIÓN A4 Y PREPARACIÓN DE DESPLEGABLES Y SVG
+         ========================================================= */
+      let closedDetailsMemory = [];
+
+      function prepareDocumentForPrint() {
+        mountSvgInstance('svg-mount-home', 'heroHome');
+        mountSvgInstance('svg-mount-credits', 'heroCredits');
+        closedDetailsMemory = [];
+        const allDetails = document.querySelectorAll('details');
+        allDetails.forEach((det) => {
+          if (!det.open) {
+            closedDetailsMemory.push(det);
+            det.open = true;
+          }
+        });
+      }
+
+      function restoreDocumentAfterPrint() {
+        closedDetailsMemory.forEach((det) => {
+          det.open = false;
+        });
+        closedDetailsMemory = [];
+      }
+
+      function bindPrintControls() {
+        window.addEventListener('beforeprint', prepareDocumentForPrint);
+        window.addEventListener('afterprint', restoreDocumentAfterPrint);
+
+        const printBtn = document.getElementById('print-pdf-btn');
+        if (printBtn) {
+          printBtn.addEventListener('click', () => {
+            prepareDocumentForPrint();
+            try {
+              window.print();
+            } catch (_) {
+              alert('Abre este archivo directamente en el navegador y utiliza Ctrl+P o Cmd+P');
+            }
+          });
+        }
+      }
+
+      /* =========================================================
+         8. BARRA DE PROGRESO Y CONTROLES DE PLEGADO Q&A / SVG
+         ========================================================= */
+      function updateReadingProgress() {
+        const bar = document.getElementById('reading-progress-bar');
+        if (!bar) return;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPct = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 100;
+        bar.style.width = scrollPct + '%';
+      }
+
+      function bindAuxiliaryControls() {
+        window.addEventListener('scroll', updateReadingProgress, { passive: true });
+
+        const toggleSvgBtn = document.getElementById('toggle-svg-anim-home');
+        if (toggleSvgBtn) {
+          toggleSvgBtn.addEventListener('click', () => {
+            document.body.classList.toggle('svg-paused');
+          });
+        }
+
+        const expandQaBtn = document.getElementById('expand-all-qa');
+        const collapseQaBtn = document.getElementById('collapse-all-qa');
+        if (expandQaBtn) {
+          expandQaBtn.addEventListener('click', () => {
+            document.querySelectorAll('#sec-5 details.qa-card').forEach((d) => { d.open = true; });
+          });
+        }
+        if (collapseQaBtn) {
+          collapseQaBtn.addEventListener('click', () => {
+            document.querySelectorAll('#sec-5 details.qa-card').forEach((d) => { d.open = false; });
+          });
+        }
+      }
+
+      /* =========================================================
+         9. INICIALIZACIÓN MAESTRA
+         ========================================================= */
+      function initApp() {
+        extractAndRemoveMasterSvg();
+        buildIndexDrawer();
+        bindNavigationEvents();
+        bindCopyButtons();
+        initChecklistsPersistence();
+        initThemeAndTypographyControls();
+        initGlobalSearch();
+        bindPrintControls();
+        bindAuxiliaryControls();
+
+        const floatHomeBtn = document.getElementById('float-home-btn');
+        const floatTopBtn = document.getElementById('float-top-btn');
+        makeButtonDraggableAndClickable(floatHomeBtn, () => go(0));
+        makeButtonDraggableAndClickable(floatTopBtn, () => scrollToCurrentTabStart());
+
+        mountSvgInstance('svg-mount-home', 'heroHome');
+        mountSvgInstance('svg-mount-credits', 'heroCredits');
+
+        const savedTab = parseInt(loadProgressState('lastTab', '0'), 10);
+        if (!isNaN(savedTab) && savedTab >= 0 && savedTab < secs.length) {
+          go(savedTab);
+        } else {
+          go(0);
+        }
+
+        setInterval(ensureVisibleSvgsMounted, 2500);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>
